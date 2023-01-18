@@ -1,0 +1,3 @@
+```{r}
+dat = read.csv("data.csv")
+```

@@ -1,0 +1,22 @@
+```{r}
+library(tidyverse)
+library(stringr)
+library(lubridate)
+
+dat = read.csv("data.csv")
+
+dat = dat %>% pivot_longer(cols = X2000.01.01:X2022.11.01, values_to = "visitors", names_to = "year")
+
+dat = dat %>% select(-c("X", "X1", "...279", "...280", "...281", "...282"))
+
+dat$year = str_remove_all(dat$year, "X")
+
+dat$year = str_replace_all(dat$year, "\\.", "-")
+
+dat$year = as.Date(dat$year)
+
+dat = dat %>% mutate(sanction = ifelse(year == "2018-08-01" & Country == "China", "1", "0"))
+
+dat = dat %>% mutate(sanction2 = ifelse(year == "2018-09-01" & Country == "China", "1", "0"))
+
+```

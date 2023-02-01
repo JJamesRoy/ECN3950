@@ -5,7 +5,7 @@ library(lubridate)
 
 dat = read.csv("data.csv")
 
-dat = dat %>% pivot_longer(cols = X2000.01.01:X2022.11.01, values_to = "visitors", names_to = "year")
+dat = dat %>% pivot_longer(cols = X2000.01.01:X2022.12.01, values_to = "visitors", names_to = "year")
 
 dat = dat %>% select(-c("X", "X1", "...279", "...280", "...281", "...282"))
 
@@ -19,4 +19,21 @@ dat = dat %>% mutate(sanction = ifelse(year == "2018-08-01" & Country == "China"
 
 dat = dat %>% mutate(sanction2 = ifelse(year == "2018-09-01" & Country == "China", "1", "0"))
 
+```
+
+```{r}
+library(forecast)
+df2 <- dat %>% select(Country, year, visitors) %>% 
+         filter(Country == "China") %>% 
+         group_by(Country, year) %>%
+         summarise(value = sum(visitors)) %>%
+         pivot_wider(names_from = Country, values_from = value, 
+         values_fill = list(value = 0))
+
+ts_data <- xts::xts(df2[-1], as.Date(df2$year, "%m/%d/%y"), frequency = 12)
+
+decomp <- stl(log(ts_data))
+ap.sa <- exp(seasadj(decomp))
+autoplot(cbind(AirPassengers, SeasonallyAdjusted=ap.sa)) +
+  xlab("Year") + ylab("Number of passengers (thousands)")
 ```

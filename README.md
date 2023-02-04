@@ -14,3 +14,8 @@ Données :
 À quel point une augmentation de la population affecte l’immobilier (on peut utiliser une mine comme variable instrumentale)
 
 
+RDD : https://scholar.harvard.edu/files/dell/files/ecta8121_0.pdf
+https://eml.berkeley.edu/~webfac/cromer/e211_sp07/card.pdf
+https://academic.oup.com/qje/article/114/2/533/1844228
+https://onlinelibrary.wiley.com/doi/full/10.1111/1468-2354.t01-1-00055
+Guide RDD : https://www.sciencedirect.com/science/article/pii/S0304407607001091#bib7 

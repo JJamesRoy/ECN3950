@@ -7,7 +7,7 @@ dat = read.csv("data.csv")
 
 dat = dat %>% pivot_longer(cols = X2000.01.01:X2022.12.01, values_to = "visitors", names_to = "year")
 
-dat = dat %>% select(-c("X", "X1", "...279", "...280", "...281", "...282"))
+dat = dat %>% select(-c("X", "X1"))
 
 dat$year = str_remove_all(dat$year, "X")
 
@@ -18,6 +18,8 @@ dat$year = as.Date(dat$year)
 dat = dat %>% mutate(sanction = ifelse(year == "2018-08-01" & Country == "China", "1", "0"))
 
 dat = dat %>% mutate(sanction2 = ifelse(year == "2018-09-01" & Country == "China", "1", "0"))
+
+#dat1 = dat %>% filter(year < "2023-01-01")
 
 ```
 
@@ -30,10 +32,33 @@ df2 <- dat %>% select(Country, year, visitors) %>%
          pivot_wider(names_from = Country, values_from = value, 
          values_fill = list(value = 0))
 
-ts_data <- xts::xts(df2[-1], as.Date(df2$year, "%m/%d/%y"), frequency = 12)
+test = ts(df2[[2]], frequency = 12, start = c(2000), end = c(2022,12))
 
-decomp <- stl(log(ts_data))
+decomp <- stl(log(test), s.window = "periodic")
 ap.sa <- exp(seasadj(decomp))
-autoplot(cbind(AirPassengers, SeasonallyAdjusted=ap.sa)) +
+autoplot(cbind(df_test$China, SeasonallyAdjusted=ap.sa)) +
   xlab("Year") + ylab("Number of passengers (thousands)")
 ```
+```{r}
+dat_test = dat %>% select(Country, year, visitors) %>% 
+         group_by(Country, year) %>%
+         summarise(value = sum(visitors)) %>%
+         pivot_wider(names_from = Country, values_from = value, 
+         values_fill = list(value = 0)) %>% 
+         select(-year)
+
+dat_test = dat_test %>% select_if(~ !any(is.na(.)))
+
+frame = ts(dat_test, frequency = 12, start = c(2000), end = c(2022,12))
+
+x1 = sapply(colnames(frame), function(x) stl(log(frame[,x]), s.window = "periodic"))
+
+ok = stl(log(frame), s.window = "periodic")
+
+for( i in 1:length(frame)) {
+   frame$stl[i] <- stl(frame[,i], s.window = "periodic" )
+}
+
+
+```
+

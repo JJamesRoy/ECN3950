@@ -36,9 +36,10 @@ test = ts(df2[[2]], frequency = 12, start = c(2000), end = c(2022,12))
 
 decomp <- stl(log(test), s.window = "periodic")
 ap.sa <- exp(seasadj(decomp))
-autoplot(cbind(df_test$China, SeasonallyAdjusted=ap.sa)) +
+autoplot(cbind(df2$China, SeasonallyAdjusted=ap.sa)) +
   xlab("Year") + ylab("Number of passengers (thousands)")
 ```
+
 ```{r}
 dat_test = dat %>% select(Country, year, visitors) %>% 
          group_by(Country, year) %>%
@@ -55,10 +56,66 @@ x1 = sapply(colnames(frame), function(x) stl(log(frame[,x]), s.window = "periodi
 
 ok = stl(log(frame), s.window = "periodic")
 
-for( i in 1:length(frame)) {
-   frame$stl[i] <- stl(frame[,i], s.window = "periodic" )
+deseasonalize_stl <- function(df) {
+  # Loop through each column of the dataframe
+  for (i in 2:ncol(df)) {
+    # Decompose the column into seasonal, trend, and remainder components
+    decomposed <- stl(log(df[, i]), s.window="periodic")
+    # Deseasonalize the column by dividing by the seasonal component
+    df[, i] <- exp(decomp$time.series[, "remainder"] + decomp$time.series[, "seasonal"])
+  }
+  return(df)
 }
 
-
+x = deseasonalize_stl(frame)
 ```
 
+```{r}
+cov_mat <- cor(dat_test)
+
+# Extraire les covariances entre la Chine et les autres pays
+china_cov <- cov_mat[, "China"]
+
+# Extraire les 10 plus grandes covariances
+top_10 <- head(sort(china_cov, decreasing = TRUE), 12)
+```
+
+```{r}
+df3 <- dat %>% select(Country, year, visitors) %>% 
+         filter(Country == "South Korea") %>% 
+         group_by(Country, year) %>%
+         summarise(value = sum(visitors)) %>%
+         pivot_wider(names_from = Country, values_from = value, 
+         values_fill = list(value = 0))
+test = ts(df3[[2]], frequency = 12, start = c(2000), end = c(2022,12))
+decomp <- stl(log(test), s.window = "periodic")
+ap.sk <- exp(seasadj(decomp))
+
+df4 <- dat %>% select(Country, year, visitors) %>% 
+         filter(Country == "Vietnam") %>% 
+         group_by(Country, year) %>%
+         summarise(value = sum(visitors)) %>%
+         pivot_wider(names_from = Country, values_from = value, 
+         values_fill = list(value = 0))
+test = ts(df4[[2]], frequency = 12, start = c(2000), end = c(2022,12))
+decomp <- stl(log(test), s.window = "periodic")
+ap.v <- exp(seasadj(decomp))
+
+df5 <- dat %>% select(Country, year, visitors) %>% 
+         filter(Country == "Canada") %>% 
+         group_by(Country, year) %>%
+         summarise(value = sum(visitors)) %>%
+         pivot_wider(names_from = Country, values_from = value, 
+         values_fill = list(value = 0))
+df5$Canada = replace_na(df5$Canada, 29682)
+test = ts(df5[[2]], frequency = 12, start = c(2000), end = c(2022,12))
+decomp <- stl(log(test), s.window = "periodic")
+ap.c <- exp(seasadj(decomp))
+
+autoplot(cbind(SK = log(ap.sk) , Chine=log(ap.sa), Viet = log(ap.v), CA = log(ap.c))) +
+  xlab("Year") + ylab("Number of passengers (thousands)")
+```
+
+pib des EU, Chine,
+
+valeur trade

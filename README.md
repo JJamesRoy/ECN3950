@@ -10,7 +10,7 @@ Données immigration : <https://www.trade.gov/i-94-arrivals-program>
 
 # Question de recherche détaillée
 
-## Question de recherche 
+## Question de recherche
 
 L'émergence de friction commerciale lors l'arrivé du gouvernement Trump
 a suscité plusieurs réactions polarisantes dans les médias. Scott
@@ -29,7 +29,7 @@ tourisme (Beech, 2018). Formellement, il est possible d'écrire cette
 question comme ceci : Quel est l'impact de cette sanction économique sur
 le nombre d'immigrants et de touristes chinois en territoire américain ?
 
-## Pourquoi cette question ? 
+## Pourquoi cette question ?
 
 Cette question est intéressante, car selon notre revue de littérature,
 le tourisme peut avoir un effet relativement significatif sur le PIB.
@@ -51,7 +51,7 @@ que notre question de recherche est autant intéressante qu'importante à
 étudier, ainsi représentant l'importance et l'intérêt économique de
 segmenter et d'étudier l'effet des sanctions sur un seul aspect.
 
-# Méthodologie de recherche 
+# Méthodologie de recherche
 
 ## Données
 
@@ -67,7 +67,7 @@ noter que les données migratoires sont divisibles par État ainsi que par
 type d'immigration. Il sera ainsi possible de pousser l'analyse plus
 loin en cas de besoin.
 
-## Méthodologie 
+## Méthodologie
 
 Pour évaluer la causalité, nous allons utiliser la régression par
 discontinuité. L'équation étudiée sera, à moins de changement sous cette

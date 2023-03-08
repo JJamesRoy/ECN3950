@@ -15,9 +15,20 @@ dat$year = str_replace_all(dat$year, "\\.", "-")
 
 dat$year = ymd(dat$year)
 
-dat = dat %>% mutate(sanction = ifelse(year == "2018-08-01" & Country == "China", "1", "0"))
+dat = dat %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
 
-dat = dat %>% mutate(sanction2 = ifelse(year == "2018-09-01" & Country == "China", "1", "0"))
+dat = dat %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
+
+dat = dat %>% mutate(china = ifelse(Country == "China", 1, 0))
+
+dat$did = dat$china*dat$sanction
+
+dat$did2 = dat$china*dat$sanction2
+
+year = dat %>% select(year) %>% 
+  filter(year >= "2012-01-01")
+
+year = unique(year)
 
 #dat1 = dat %>% filter(year < "2023-01-01")
 
@@ -37,19 +48,19 @@ test = ts(df2[[2]], frequency = 12, start = c(2012), end = c(2022,12))
 
 decomp <- stl(log(test), s.window = "periodic")
 ap.sa <- exp(seasadj(decomp))
-autoplot(cbind(df2$China, SeasonallyAdjusted=ap.sa)) +
-  xlab("Year") + ylab("Number of passengers (thousands)")
+#autoplot(cbind(df2$China, SeasonallyAdjusted=ap#.sa)) +
+#  xlab("Year") + ylab("Number of passengers #(thousands)")
 ```
 
 ```{r}
-dat_test = dat %>% select(Country, year, visitors) %>% 
-         filter(year >= "2012-01-01") %>%
-         filter(Country == c("China", "South Korea", "Vietnam"))
-         group_by(Country, year) %>%
-         summarise(value = sum(visitors)) %>% 
-         filter(Country == c("China", "South Korea", "Vietnam")) #%>% 
-         arrange(Country) #%>%
-         mutate(rate = (value - lag(value))/lag(value)) 
+#dat_test = dat %>% select(Country, year, visitors#) %>% 
+#         filter(year >= "2012-01-01") %>%
+#         filter(Country == c("China", "South #Korea", "Vietnam"))
+#         group_by(Country, year) %>%
+#         summarise(value = sum(visitors)) %>% 
+#         filter(Country == c("China", "South Korea", "Vietnam")) #%>% 
+#         arrange(Country) #%>%
+#         mutate(rate = (value - lag(value))/lag(value)) 
         
 
 #dat_test = dat_test %>% select_if(~ !any(is.na(.)))
@@ -106,25 +117,44 @@ autoplot(cbind(SK = log(ap.sk) , Chine=log(ap.sa), Viet = log(ap.v))) +
   xlab("Year") + ylab("Number of passengers (thousands)")
 
 
-frame = as.data.frame(cbind(year = as.Date(df2$year), sk = log(ap.sk), ca = log(ap.sa), vt = log(ap.v)))
+frame = as.data.frame(cbind(year = year, sk = log(ap.sk), ca = log(ap.sa), vt = log(ap.v)))
 frame = frame %>% pivot_longer(cols = sk:vt, values_to = "visitors", names_to = "country")
 
-frame1 = as.data.frame(cbind(year = df2$year, sk = ap.sk, ca = ap.sa, vt = ap.v))
-frame1 = frame1 %>% pivot_longer(cols = sk:vt, values_to = "visitors", names_to = "country")
+frame1 = as.data.frame(cbind(year = year, rate_sk = (as.vector(ap.sk)-lag(as.vector(ap.sk)))/lag(as.vector(ap.sk)),
+         rate_ca = (as.vector(ap.sa)-lag(as.vector(ap.sa)))/lag(as.vector(ap.sa)),
+         rate_vt = (as.vector(ap.v)-lag(as.vector(ap.v)))/lag(as.vector(ap.v))))
+frame1 = frame1 %>% pivot_longer(cols = rate_sk:rate_vt, values_to = "value", names_to = "country")
 
-frame1 = frame1 %>%
-         arrange(year, country) %>%
-         mutate(rate = (visitors-lag(visitors))/lag(visitors)) 
+
 
 
 ggplot(frame, aes(year, visitors, group = country, color = country)) +
   geom_line()
 
-ggplot(dat_test, aes(year, rate, group = Country, color = Country)) +
-  geom_line() +
-  ylim(1,-1)
+ggplot(frame1, aes(year)) +
+  geom_line(aes(y = rate_sk, linetype = "twodash")) +
+  geom_line(aes(y = rate_ca, linetype = "dotted")) +
+  geom_line(aes(y = rate_vt)) +
+  ylim(-1, 1)
 ```
 
 ```{r}
+dat_model = dat %>% filter(year >= "2012-01-01") %>% filter(Country == c("Vietnam", "South Korea", "China"))
+did_model = lm(visitors ~ year + sanction + china + did, data = dat_model)
+summary(did_model)
+```
 
+```{r}
+dat_mod2 = frame1 %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
+
+dat_mod2 = dat_mod2 %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
+
+dat_mod2 = dat_mod2 %>% mutate(china = ifelse(country == "rate_ca", 1, 0))
+
+dat_mod2$did = dat_mod2$china*dat_mod2$sanction
+
+dat_mod2$did2 = dat_mod2$china*dat_mod2$sanction2
+
+did_model = lm(value ~ year + sanction + china + did, data = dat_mod2)
+summary(did_model)
 ```

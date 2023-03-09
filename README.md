@@ -97,8 +97,4 @@ RDD : <https://scholar.harvard.edu/files/dell/files/ecta8121_0.pdf>
 Guide RDD :
 <https://www.sciencedirect.com/science/article/pii/S0304407607001091#bib7>
 
-Taches :
-1. Finir régression
-2. Stat descriptive
-3. GGplot
-4.
+Taches : 1. Finir régression 2. Stat descriptive 3. GGplot 4.

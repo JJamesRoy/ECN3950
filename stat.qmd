@@ -1,1 +1,80 @@
 Stat descriptive
+
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(gtsummary)
+library(lubridate)
+library(psych)
+library(data.table) 
+library(formattable)
+library(stargazer)
+library(skimr)
+library(xtable)
+
+data_country <- read_csv("data_country.csv", 
+    col_types = cols(Time = col_number()))
+
+data_country <- clean_names(data_country)
+
+data_country$time <- as.Date(as.character(data_country$time), format = "%Y")
+data_country$time <- format(data_country$time, format="%Y")
+
+#Extraction du pourcentage de trade entre 2015 et 2020
+df_MercTrade <- filter(data_country,series_name=="Merchandise trade (% of GDP)") %>%
+  subset(country_code!="VNM")
+
+
+
+#US
+trade_US <- df_MercTrade %>% select(time,country_name, value) %>% 
+  filter(str_detect(country_name,"United States"))
+  
+trade_US$value <- round(trade_US$value) 
+
+
+#CHine
+trade_CH <- df_MercTrade %>% select(time,country_name, value) %>% 
+  filter(str_detect(country_name,"China"))
+
+trade_CH$value <- round(trade_CH$value)
+
+#corée du sud
+trade_KOR <- df_MercTrade %>% select(time,country_name, value) %>% 
+  filter(str_detect(country_name,"Korea, Rep."))
+
+trade_KOR$value <- round(trade_KOR$value)
+
+#Creation des tables
+stargazer(trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = 'Us_trade_perc.htm',
+          covariate.labels=c("Année","Pays","Pourcentage"))
+stargazer(trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = 'CH_trade_perc.htm',
+          covariate.labels=c("Année","Pays", "Pourcentage"))
+stargazer(trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = 'Kor_trade_perc.htm',
+          covariate.labels=c("Année","Pays","Pourcentage"))
+
+
+describe(trade_US, fast=TRUE)
+
+describeBy(df_MercTrade$value, 
+           group = df_MercTrade$country_name, fast=TRUE)
+
+
+
+colnames(df_MercTrade)[7] ="Trade percentage"
+
+df1 <- df_MercTrade %>%
+  group_by(country_name) %>%
+  skim() %>% 
+  dplyr::select(-n_missing)
+
+df <- tail(df1, 3)
+
+df <- subset(df,select= -c(skim_type,complete_rate:character.whitespace))
+
+print(xtable(df), type="html", file="desc_3pays.html")
+
+
+
+```

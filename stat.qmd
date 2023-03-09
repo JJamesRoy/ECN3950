@@ -15,6 +15,8 @@ library(xtable)
 
 ```
 
+# data frame de base 
+
 ```{r}
 
 data_country <- read_csv("data_country.csv", 
@@ -29,8 +31,14 @@ data_country$country_name <- data_country$country_name %>%
   str_replace_all("United States","États Unis") %>%
   str_replace_all("China","Chine") %>% 
   str_replace_all("Korea, Rep.","Corée du Sud")
+```
 
-#Extraction du pourcentage de trade entre 2015 et 2020
+# Merchandise trade (% of GDP)
+
+```{r}
+
+
+#Extraction du pourcentage de trade 
 df_MercTrade <- filter(data_country,series_name=="Merchandise trade (% of GDP)")
 
 
@@ -62,19 +70,19 @@ trade_VIET <- df_MercTrade %>% select(time,country_name, value) %>%
 trade_VIET$value <- round(trade_VIET$value, digits = 2) 
 
 #Creation des tables
-stargazer(trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = 'Us_trade_perc.htm',
+stargazer(trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/Us_trade_perc.htm',
           covariate.labels=c("Année","Pays","Pourcentage"), 
           title="Pourcentage du PIB lié au commerce de marchandise")
 
-stargazer(trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = 'CH_trade_perc.htm',
+stargazer(trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/CH_trade_perc.htm',
           covariate.labels=c("Année","Pays", "Pourcentage"),
           title="Pourcentage du PIB lié au commerce de marchandise")
 
-stargazer(trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = 'Kor_trade_perc.htm',
+stargazer(trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/Kor_trade_perc.htm',
           covariate.labels=c("Année","Pays","Pourcentage"),
           title="Pourcentage du PIB lié au commerce de marchandise")
 
-stargazer(trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = 'viet_trade_perc.htm',
+stargazer(trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/viet_trade_perc.htm',
           covariate.labels=c("Année","Pays","Pourcentage"),
           title="Pourcentage du PIB lié au commerce de marchandise")
 
@@ -97,10 +105,88 @@ df1 <- rapply(object = df1, f = round, classes = "numeric", how = "replace", dig
 
 df1
 
-stargazer(df1,summary=FALSE, rownames=FALSE, out = "desc_4pays.html",
-          title = "Statistiques descriptives : pourcentage du PIB seulement lié au commerce de marchandises. ")
-
-
-
+stargazer(df1,summary=FALSE, rownames=FALSE, out = "%PIB_Merc/desc_4pays.html",
+          title = "Statistiques descriptives : Pourcentage du ratio du commerce de marchandise/PIB ")
 
 ```
+
+
+# Net trade in goods and services (BoP, current US$)
+``` {r}
+
+df_NetTrade_GS <- filter(data_country,series_name=="Net trade in goods and services (BoP, current US$)")
+options(scipen=999)
+
+# US
+Net_trade_US <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
+  filter(str_detect(country_name,"États Unis"))
+
+#CHine
+Net_trade_CH <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
+  filter(str_detect(country_name,"Chine"))
+
+
+#corée du sud
+Net_trade_KOR <-  df_NetTrade_GS %>% select(time,country_name, value) %>% 
+  filter(str_detect(country_name,"Corée du Sud"))
+
+
+#vietnam
+Net_trade_VIET <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
+  filter(str_detect(country_name,"Vietnam"))
+
+
+#Creation des tables
+stargazer(trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/Us_trade_perc.htm',
+          covariate.labels=c("Année","Pays","Pourcentage"), 
+          title="Pourcentage du PIB lié au commerce de marchandise")
+
+stargazer(trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/CH_trade_perc.htm',
+          covariate.labels=c("Année","Pays", "Pourcentage"),
+          title="Pourcentage du PIB lié au commerce de marchandise")
+
+stargazer(trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/Kor_trade_perc.htm',
+          covariate.labels=c("Année","Pays","Pourcentage"),
+          title="Pourcentage du PIB lié au commerce de marchandise")
+
+stargazer(trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/viet_trade_perc.htm',
+          covariate.labels=c("Année","Pays","Pourcentage"),
+          title="Pourcentage du PIB lié au commerce de marchandise")
+
+comprss <- function(tx) { 
+      div <- findInterval(as.numeric(gsub("\\,", "", tx)), 
+         c(1e12,1e9,1e6,1e3,0, 1e3, 1e6, 1e9, 1e12) )  # modify this if negative numbers are possible
+      paste(round( as.numeric(gsub("\\,","",tx))/10^(3*(div-1)), 2), 
+           c("","K","M","B","T")[div] )}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ # paste(format(round(Net_trade_US$value / 1e6, 1), trim = TRUE), "M")
+
+```
+
+
+
+
+

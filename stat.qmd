@@ -12,7 +12,7 @@ library(formattable)
 library(stargazer)
 library(skimr)
 library(xtable)
-
+library(scales)
 ```
 
 # data frame de base 
@@ -98,15 +98,10 @@ df1 <- df_MercTrade %>%
 colnames(df1) <- c("Pays","Moyenne","Écart_type","Min","Q1","Med","Q3","Max","Hist")
 
 
-
-df1[ ,-1] <-round(df[,-1],0)
-
 df1 <- rapply(object = df1, f = round, classes = "numeric", how = "replace", digits = 2)
 
-df1
-
 stargazer(df1,summary=FALSE, rownames=FALSE, out = "%PIB_Merc/desc_4pays.html",
-          title = "Statistiques descriptives : Pourcentage du ratio du commerce de marchandise/PIB ")
+          title = "Statistiques descriptives : Pourcentage du ratio du commerce de marchandise/PIB entre 1990 et 2021 ")
 
 ```
 
@@ -121,66 +116,68 @@ options(scipen=999)
 Net_trade_US <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
   filter(str_detect(country_name,"États Unis"))
 
+Net_trade_US$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_US$value)
+
 #CHine
 Net_trade_CH <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
   filter(str_detect(country_name,"Chine"))
 
+Net_trade_CH$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_CH$value)
 
 #corée du sud
 Net_trade_KOR <-  df_NetTrade_GS %>% select(time,country_name, value) %>% 
   filter(str_detect(country_name,"Corée du Sud"))
+
+Net_trade_KOR$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_KOR$value)
 
 
 #vietnam
 Net_trade_VIET <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
   filter(str_detect(country_name,"Vietnam"))
 
+Net_trade_VIET$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_VIET$value)
+
 
 #Creation des tables
-stargazer(trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/Us_trade_perc.htm',
-          covariate.labels=c("Année","Pays","Pourcentage"), 
-          title="Pourcentage du PIB lié au commerce de marchandise")
+stargazer(Net_trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/Us_NETtrade_perc.htm',
+          covariate.labels=c("Année","Pays","Exportation Net"), 
+          title="Exportation Net en US$ entre 2015 et 2021")
 
-stargazer(trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/CH_trade_perc.htm',
-          covariate.labels=c("Année","Pays", "Pourcentage"),
-          title="Pourcentage du PIB lié au commerce de marchandise")
+stargazer(Net_trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/CH_NETtrade_perc.htm',
+          covariate.labels=c("Année","Pays", "Exportation Net"),
+          title="Exportation Net en US$ entre 2015 et 2021")
 
-stargazer(trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/Kor_trade_perc.htm',
-          covariate.labels=c("Année","Pays","Pourcentage"),
-          title="Pourcentage du PIB lié au commerce de marchandise")
+stargazer(Net_trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/Kor_NETtrade_perc.htm',
+          covariate.labels=c("Année","Pays","Exportation Net"),
+          title="Exportation Net en US$ entre 2015 et 2021")
 
-stargazer(trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/viet_trade_perc.htm',
-          covariate.labels=c("Année","Pays","Pourcentage"),
-          title="Pourcentage du PIB lié au commerce de marchandise")
-
-comprss <- function(tx) { 
-      div <- findInterval(as.numeric(gsub("\\,", "", tx)), 
-         c(1e12,1e9,1e6,1e3,0, 1e3, 1e6, 1e9, 1e12) )  # modify this if negative numbers are possible
-      paste(round( as.numeric(gsub("\\,","",tx))/10^(3*(div-1)), 2), 
-           c("","K","M","B","T")[div] )}
+stargazer(Net_trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/viet_NETtrade_perc.htm',
+          covariate.labels=c("Année","Pays","Exportation Net"),
+          title="Exportation Net en US$ entre 2015 et 2021")
 
 
 
+df_trade <- df_NetTrade_GS %>%
+  group_by(country_name) %>%
+  skim() %>% 
+   yank("numeric") %>% 
+  select(-c(n_missing,skim_variable,complete_rate))
 
 
 
+df_trade$mean <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$mean)
+df_trade$sd <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$sd)
+df_trade$p0 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$p0)
+df_trade$p25 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$p25)
+df_trade$p50 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$p50)
+df_trade$p75 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$p75)
+df_trade$p100 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$p100)
 
 
+colnames(df_trade) <- c("Pays","Moyenne","Écart_type","Min","Q1","Med","Q3","Max","Hist")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+stargazer(df1,summary=FALSE, rownames=FALSE, out = "%PIB_Merc/desc_4pays.html",
+          title = "Statistiques descriptives : Pourcentage du ratio du commerce de marchandise/PIB ")
 
  # paste(format(round(Net_trade_US$value / 1e6, 1), trim = TRUE), "M")
 

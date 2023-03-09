@@ -1,7 +1,7 @@
 Stat descriptive
 
-
 ```{r}
+
 library(tidyverse)
 library(janitor)
 library(gtsummary)
@@ -13,6 +13,10 @@ library(stargazer)
 library(skimr)
 library(xtable)
 
+```
+
+```{r}
+
 data_country <- read_csv("data_country.csv", 
     col_types = cols(Time = col_number()))
 
@@ -21,59 +25,81 @@ data_country <- clean_names(data_country)
 data_country$time <- as.Date(as.character(data_country$time), format = "%Y")
 data_country$time <- format(data_country$time, format="%Y")
 
+data_country$country_name <- data_country$country_name %>% 
+  str_replace_all("United States","États Unis") %>%
+  str_replace_all("China","Chine") %>% 
+  str_replace_all("Korea, Rep.","Corée du Sud")
+
 #Extraction du pourcentage de trade entre 2015 et 2020
-df_MercTrade <- filter(data_country,series_name=="Merchandise trade (% of GDP)") %>%
-  subset(country_code!="VNM")
+df_MercTrade <- filter(data_country,series_name=="Merchandise trade (% of GDP)")
 
 
 
 #US
 trade_US <- df_MercTrade %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"United States"))
-  
-trade_US$value <- round(trade_US$value) 
+  filter(str_detect(country_name,"États Unis"))
+
+trade_US$value <- round(trade_US$value, digits = 2)  
 
 
 #CHine
 trade_CH <- df_MercTrade %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"China"))
+  filter(str_detect(country_name,"Chine"))
 
-trade_CH$value <- round(trade_CH$value)
+trade_CH$value <- round(trade_CH$value, digits = 2) 
+
 
 #corée du sud
 trade_KOR <- df_MercTrade %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"Korea, Rep."))
+  filter(str_detect(country_name,"Corée du Sud"))
 
-trade_KOR$value <- round(trade_KOR$value)
+trade_KOR$value <- round(trade_KOR$value, digits = 2) 
+
+#vietnam
+trade_VIET <- df_MercTrade %>% select(time,country_name, value) %>% 
+  filter(str_detect(country_name,"Vietnam"))
+
+trade_VIET$value <- round(trade_VIET$value, digits = 2) 
 
 #Creation des tables
 stargazer(trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = 'Us_trade_perc.htm',
-          covariate.labels=c("Année","Pays","Pourcentage"))
+          covariate.labels=c("Année","Pays","Pourcentage"), 
+          title="Pourcentage du PIB lié au commerce de marchandise")
+
 stargazer(trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = 'CH_trade_perc.htm',
-          covariate.labels=c("Année","Pays", "Pourcentage"))
+          covariate.labels=c("Année","Pays", "Pourcentage"),
+          title="Pourcentage du PIB lié au commerce de marchandise")
+
 stargazer(trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = 'Kor_trade_perc.htm',
-          covariate.labels=c("Année","Pays","Pourcentage"))
+          covariate.labels=c("Année","Pays","Pourcentage"),
+          title="Pourcentage du PIB lié au commerce de marchandise")
+
+stargazer(trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = 'viet_trade_perc.htm',
+          covariate.labels=c("Année","Pays","Pourcentage"),
+          title="Pourcentage du PIB lié au commerce de marchandise")
 
 
-describe(trade_US, fast=TRUE)
-
-describeBy(df_MercTrade$value, 
-           group = df_MercTrade$country_name, fast=TRUE)
-
-
-
-colnames(df_MercTrade)[7] ="Trade percentage"
-
+options(digits = 4)
 df1 <- df_MercTrade %>%
   group_by(country_name) %>%
   skim() %>% 
-  dplyr::select(-n_missing)
+   yank("numeric") %>% 
+  select(-c(n_missing,skim_variable,complete_rate))
 
-df <- tail(df1, 3)
 
-df <- subset(df,select= -c(skim_type,complete_rate:character.whitespace))
+colnames(df1) <- c("Pays","Moyenne","Écart_type","Min","Q1","Med","Q3","Max","Hist")
 
-print(xtable(df), type="html", file="desc_3pays.html")
+
+
+df1[ ,-1] <-round(df[,-1],0)
+
+df1 <- rapply(object = df1, f = round, classes = "numeric", how = "replace", digits = 2)
+
+df1
+
+stargazer(df1,summary=FALSE, rownames=FALSE, out = "desc_4pays.html",
+          title = "Statistiques descriptives : pourcentage du PIB seulement lié au commerce de marchandises. ")
+
 
 
 

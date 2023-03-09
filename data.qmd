@@ -14,6 +14,8 @@ dat$year = str_remove_all(dat$year, "X")
 
 dat$year = str_replace_all(dat$year, "\\.", "-")
 
+dat = dat %>% drop_na(region)
+
 dat$year = ymd(dat$year)
 
 year = dat %>% select(year) %>% 
@@ -43,27 +45,40 @@ ap.sa <- exp(seasadj(decomp))
 ```
 
 ```{r}
-#dat_test = dat %>% select(Country, year, visitors#) %>% 
-#         filter(year >= "2012-01-01") %>%
-#         filter(Country == c("China", "South #Korea", "Vietnam"))
-#         group_by(Country, year) %>%
-#         summarise(value = sum(visitors)) %>% 
-#         filter(Country == c("China", "South Korea", "Vietnam")) #%>% 
-#         arrange(Country) #%>%
-#         mutate(rate = (value - lag(value))/lag(value)) 
-        
+dat_cor = dat %>% select(Country, year, visitors) %>% 
+         filter(year >= "2012-01-01") %>%
+         drop_na(visitors) %>% 
+         pivot_wider(names_from = Country, values_from = visitors) %>% 
+         select(-c(year))
+       
+cov_mat <- cor(dat_cor)
 
-#dat_test = dat_test %>% select_if(~ !any(is.na(.)))
+# Extraire les corélations entre la Chine et les autres pays
+china_cov <- cov_mat[, "China"]
 
-#cov_mat <- cor(dat_test)
-#
-## Extraire les corélations entre la Chine et les autres pays
-#china_cov <- cov_mat[, "China"]
-#
-## Extraire les 10 plus grandes covariances
-#top_10 <- head(sort(china_cov, decreasing = TRUE), 12)
+# Extraire les 10 plus grandes covariances
+head(sort(china_cov, decreasing = TRUE), 10)
+ #Trouver les pays qui ont le changement de touristes le plus similaires à la Chine
+```
 
-# Trouver les pays qui ont le changement de touristes le plus similaires à la Chine
+```{r}
+dat_cor2 = dat %>% select(Country, year, visitors) %>% 
+         filter(year >= "2012-01-01") %>%
+         drop_na(visitors) %>% 
+         group_by(Country) %>% 
+         mutate(rate = (visitors - lag(visitors))/lag(visitors)) %>%  
+         drop_na(rate) %>% 
+         select(-c(visitors)) %>% 
+         pivot_wider(names_from = Country, values_from = rate) %>% 
+         select(-c(year))
+         
+cov_mat <- cor(dat_cor2)
+
+# Extraire les corélations entre la Chine et les autres pays
+china_cov <- cov_mat[, "China"]
+
+# Extraire les 10 plus grandes covariances
+head(sort(china_cov, decreasing = TRUE), 10)
 ```
 
 ```{r}
@@ -147,8 +162,8 @@ ggsave("p3.png")
 ```
 
 ```{r}
-dat_model = as.data.frame(cbind(year = year, sk = ap.sk, ca = ap.sa, vt = ap.v))
-dat_model = dat_model%>% pivot_longer(cols = sk:vt, values_to = "value", names_to = "country")
+dat_model = as.data.frame(cbind(year = year, sk = ap.sk, ca = ap.sa))
+dat_model = dat_model%>% pivot_longer(cols = sk:ca, values_to = "value", names_to = "country")
 
 dat_model = dat_model %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
 
@@ -168,25 +183,26 @@ summary(did_model_alt)
 ```
 
 ```{r}
-dat_mod2 = frame1 %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
-
-dat_mod2 = dat_mod2 %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
-
-dat_mod2 = dat_mod2 %>% mutate(china = ifelse(country == "rate_ca", 1, 0))
-
-dat_mod2$did = dat_mod2$china*dat_mod2$sanction
-
-dat_mod2$did2 = dat_mod2$china*dat_mod2$sanction2
-
-did_model2 = lm(value ~ year + sanction + china + did, data = dat_mod2)
-summary(did_model2)
-
-did_model2_alt = lm(value ~ year + sanction2 + china + did2, data = dat_mod2)
-summary(did_model2)
+#dat_mod2 = frame1 %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
+#
+#dat_mod2 = dat_mod2 %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
+#
+#dat_mod2 = dat_mod2 %>% mutate(china = ifelse(country == "rate_ca", 1, 0))
+#
+#dat_mod2$did = dat_mod2$china*dat_mod2$sanction
+#
+#dat_mod2$did2 = dat_mod2$china*dat_mod2$sanction2
+#
+#did_model2 = lm(value ~ year + sanction + china + did, data = dat_mod2)
+#summary(did_model2)
+#
+#did_model2_alt = lm(value ~ year + sanction2 + china + did2, data = dat_mod2)
+#summary(did_model2)
 ```
 
 ```{r}
-dat_mod3 = frame %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
+dat_mod3 = frame %>% filter(country != "vt") %>% 
+  mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
 
 dat_mod3 = dat_mod3 %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
 
@@ -206,5 +222,49 @@ summary(did_model3_alt)
 ```{r}
 library(stargazer)
 
-stargazer(did_model, did_model_alt, did_model3, did_model3_alt, title="Résultat des régressions", align=TRUE, dep.var.labels=c("Nombre de touristes","Log du nombre"), covariate.labels=c("Mois","Sanction", "Sanction 2", "Chine", "Dif. en Dif.", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models.htm")
+stargazer(did_model, did_model_alt, did_model3, did_model3_alt, title="Résultat des régressions", align=TRUE, dep.var.labels=c("Nombre de touristes","Log du nombre"), covariate.labels=c("Mois","Sanction", "Sanction 2", "Chine", "Dif. en Dif.", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models_sk.htm")
+```
+
+```{r}
+dat_model_vt = as.data.frame(cbind(year = year, ca = ap.sa, vt = ap.v))
+dat_model_vt = dat_model_vt%>% pivot_longer(cols = ca:vt, values_to = "value", names_to = "country")
+
+dat_model_vt = dat_model_vt %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
+
+dat_model_vt = dat_model_vt %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
+
+dat_model_vt = dat_model_vt %>% mutate(china = ifelse(country == "ca", 1, 0))
+
+dat_model_vt$did = dat_model_vt$china*dat_model_vt$sanction
+
+dat_model_vt$did2 = dat_model_vt$china*dat_model_vt$sanction2
+
+did_model_vt = lm(value ~ year + sanction + china + did, data = dat_model_vt)
+summary(did_model_vt)
+
+did_model_alt_vt = lm(value ~ year + sanction2 + china + did2, data = dat_model_vt)
+summary(did_model_alt_vt)
+```
+
+```{r}
+dat_mod3_vt = frame %>% filter(country != "sk") %>% 
+  mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
+
+dat_mod3_vt = dat_mod3_vt %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
+
+dat_mod3_vt = dat_mod3_vt %>% mutate(china = ifelse(country == "ca", 1, 0))
+
+dat_mod3_vt$did = dat_mod3_vt$china*dat_mod3_vt$sanction
+
+dat_mod3_vt$did2 = dat_mod3_vt$china*dat_mod3_vt$sanction2
+
+did_model3_vt = lm(value ~ year + sanction + china + did, data = dat_mod3_vt)
+summary(did_model3_vt)
+
+did_model3_alt_vt = lm(value ~ year + sanction2 + china + did2, data = dat_mod3_vt)
+summary(did_model3_alt_vt)
+```
+
+```{r}
+stargazer(did_model_vt, did_model_alt_vt, did_model3_vt, did_model3_alt_vt, title="Résultat des régressions", align=TRUE, dep.var.labels=c("Nombre de touristes","Log du nombre"), covariate.labels=c("Mois","Sanction", "Sanction 2", "Chine", "Dif. en Dif.", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models_vt.htm")
 ```

@@ -41,7 +41,20 @@ data_country$country_name <- data_country$country_name %>%
 #Extraction du pourcentage de trade 
 df_MercTrade <- filter(data_country,series_name=="Merchandise trade (% of GDP)")
 
-
+plot_Merc <- ggplot(df_MercTrade,aes(x=time,y=value, group=country_name, colour=country_name))+
+   geom_line(size=1.2)+
+   scale_y_continuous(breaks=seq(0, 150,15))+
+   labs(title = "Pourcentage du PIB lié au commerce de marchandise",
+        x=NULL,
+        y="Pourcentage")+
+   guides(color = guide_legend(title = "Pays"))+
+  scale_x_discrete(breaks=seq(2000, 2021, 5))+
+   theme_minimal()+
+  theme(plot.title = element_text(size=16),
+        axis.text=element_text(size=12,face="bold"),
+        axis.title=element_text(size=16,),
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size=16,face="bold"))
 
 #US
 trade_US <- df_MercTrade %>% select(time,country_name, value) %>% 
@@ -112,48 +125,64 @@ stargazer(df1,summary=FALSE, rownames=FALSE, out = "%PIB_Merc/desc_4pays.html",
 df_NetTrade_GS <- filter(data_country,series_name=="Net trade in goods and services (BoP, current US$)")
 options(scipen=999)
 
+plot_trade <- ggplot(df_NetTrade_GS,aes(x=time,y=value, group=country_name, colour=country_name))+
+   geom_line(size=1.2)+
+   scale_y_continuous(breaks=seq(-500000000000, 500000000000,500000000000/3),labels = scientific   labs(title = "Exportations nettes en US$ entre 1990 et 2021",
+        x=NULL,
+        y="Exportation nest")+tes
+   guides(color = guide_legend(title = "Pays"))+
+  scale_x_discrete(breaks=seq(2000, 2021, 5))+
+   theme_minimal()+
+  theme(plot.title = element_text(size=22)16        axis.text=element_text(size=12,face="bold"),
+        axis.title=element_text(size=16,fac        legend.text = element_text(size = 14),
+        legend.title = element_text(size=16,face="bold"))
+
+
 # US
 Net_trade_US <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
   filter(str_detect(country_name,"États Unis"))
+Net_trade_US <- Net_trade_US[-1,]
+
 
 Net_trade_US$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_US$value)
 
 #CHine
 Net_trade_CH <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
   filter(str_detect(country_name,"Chine"))
-
+Net_trade_CH <- Net_trade_CH[-1,]
 Net_trade_CH$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_CH$value)
 
 #corée du sud
 Net_trade_KOR <-  df_NetTrade_GS %>% select(time,country_name, value) %>% 
   filter(str_detect(country_name,"Corée du Sud"))
-
+Net_trade_KOR <- Net_trade_KOR[-1,]
 Net_trade_KOR$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_KOR$value)
 
 
 #vietnam
 Net_trade_VIET <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
   filter(str_detect(country_name,"Vietnam"))
+Net_trade_VIET <- Net_trade_VIET[-1,]
 
 Net_trade_VIET$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_VIET$value)
 
 
 #Creation des tables
 stargazer(Net_trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/Us_NETtrade_perc.htm',
-          covariate.labels=c("Année","Pays","Exportation Net"), 
-          title="Exportation Net en US$ entre 2015 et 2021")
+          covariate.labels=c("Année","Pays","Exportation Nes nettes"), 
+          title="Exportations nettes en US$ entre 2015 et 2021")
 
 stargazer(Net_trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/CH_NETtrade_perc.htm',
-          covariate.labels=c("Année","Pays", "Exportation Net"),
-          title="Exportation Net en US$ entre 2015 et 2021")
+          covariate.labels=c("Année","Pays", "Exportations nettes"),
+          title="Exportations nettes en US$ entre 2015 et 2021")
 
 stargazer(Net_trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/Kor_NETtrade_perc.htm',
-          covariate.labels=c("Année","Pays","Exportation Net"),
-          title="Exportation Net en US$ entre 2015 et 2021")
+          covariate.labels=c("Année","Pays","Exportations nettes"),
+          title="Exportations nettes en US$ entre 2015 et 2021")
 
 stargazer(Net_trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/viet_NETtrade_perc.htm',
-          covariate.labels=c("Année","Pays","Exportation Net"),
-          title="Exportation Net en US$ entre 2015 et 2021")
+          covariate.labels=c("Année","Pays","Exportations nettes"),
+          title="Exportations nettes en US$ entre 2015 et 2021")
 
 
 
@@ -176,8 +205,8 @@ df_trade$p100 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trad
 
 colnames(df_trade) <- c("Pays","Moyenne","Écart_type","Min","Q1","Med","Q3","Max","Hist")
 
-stargazer(df1,summary=FALSE, rownames=FALSE, out = "%PIB_Merc/desc_4pays.html",
-          title = "Statistiques descriptives : Pourcentage du ratio du commerce de marchandise/PIB ")
+stargazer(df_trade,summary=FALSE, rownames=FALSE, out = "Stats_desc_NetTrade/descTrade_4pays.htm",
+          title = "Statistiques descriptives : Exportations nettes US$ entre 1990 et 2021")
 
  # paste(format(round(Net_trade_US$value / 1e6, 1), trim = TRUE), "M")
 

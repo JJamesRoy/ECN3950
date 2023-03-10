@@ -23,11 +23,61 @@ year = dat %>% select(year) %>%
 
 year = unique(year)
 
+year2 = dat %>% select(year)
+
+year2 = unique(year2)
+
 
 ```
 
-```{r}
+```{r csv_clean}
 library(forecast)
+df2 <- dat %>% select(Country, year, visitors) %>% 
+         filter(Country == "China") %>% 
+         group_by(Country, year) %>%
+         summarise(value = sum(visitors)) %>%
+         pivot_wider(names_from = Country, values_from = value, 
+         values_fill = list(value = 0))
+
+test = ts(df2[[2]], frequency = 12, start = c(2000), end = c(2022,12))
+
+decomp <- stl(log(test), s.window = "periodic")
+ap.sa <- exp(seasadj(decomp))
+
+
+df3 <- dat %>% select(Country, year, visitors) %>% 
+         filter(Country == "South Korea") %>% 
+         group_by(Country, year) %>%
+         summarise(value = sum(visitors)) %>%
+         pivot_wider(names_from = Country, values_from = value, 
+         values_fill = list(value = 0))
+
+test = ts(df3[[2]], frequency = 12, start = c(2000), end = c(2022,12))
+decomp <- stl(log(test), s.window = "periodic")
+ap.sk <- exp(seasadj(decomp))
+
+df4 <- dat %>% select(Country, year, visitors) %>% 
+         filter(Country == "Vietnam") %>% 
+         group_by(Country, year) %>%
+         summarise(value = sum(visitors)) %>%
+         pivot_wider(names_from = Country, values_from = value, 
+         values_fill = list(value = 0))
+
+test = ts(df4[[2]], frequency = 12, start = c(2000), end = c(2022,12))
+decomp <- stl(log(test), s.window = "periodic")
+ap.v <- exp(seasadj(decomp))
+
+frame_csv = as.data.frame(cbind(year = year2, sk = ap.sk, ca = ap.sa, vt = ap.v))
+frame_csv = frame_csv %>% pivot_longer(cols = sk:vt, values_to = "value", names_to = "country")
+
+write.csv(frame_csv, "clean_data_desai.csv")
+
+dat_clean = dat %>% filter(Country == c("Vietnam", "South Korea", "China"))
+
+write.csv(dat_clean, "clean_data.csv")
+```
+
+```{r}
 df2 <- dat %>% select(Country, year, visitors) %>% 
          filter(Country == "China") %>% 
          group_by(Country, year) %>%

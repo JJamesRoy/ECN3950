@@ -3,12 +3,8 @@ Stat descriptive
 ```{r}
 
 library(tidyverse)
-library(janitor)
-library(gtsummary)
 library(lubridate)
-library(psych)
 library(data.table) 
-library(formattable)
 library(stargazer)
 library(skimr)
 library(xtable)
@@ -168,19 +164,19 @@ Net_trade_VIET$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(
 
 
 #Creation des tables
-stargazer(Net_trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/Us_NETtrade_perc.htm',
+stargazer(Net_trade_US[17:23, ],summary=FALSE, rownames=FALSE,outtype = "text", = 'Stats_desc_NetTrade/Us_NETtrade_perc.htm',
           covariate.labels=c("Année","Pays","Exportation Nes nettes"), 
           title="Exportations nettes en US$ entre 2015 et 2021")
 
-stargazer(Net_trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/CH_NETtrade_perc.htm',
+stargazer(Net_trade_CH[17:23, ],summary=FALSE, rownames=FALSE,type = "text",out = 'Stats_desc_NetTrade/CH_NETtrade_perc.htm',
           covariate.labels=c("Année","Pays", "Exportations nettes"),
           title="Exportations nettes en US$ entre 2015 et 2021")
 
-stargazer(Net_trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/Kor_NETtrade_perc.htm',
+stargazer(Net_trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,type = "text",out = 'Stats_desc_NetTrade/Kor_NETtrade_perc.htm',
           covariate.labels=c("Année","Pays","Exportations nettes"),
           title="Exportations nettes en US$ entre 2015 et 2021")
 
-stargazer(Net_trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = 'Stats_desc_NetTrade/viet_NETtrade_perc.htm',
+stargazer(Net_trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,type = "text",out = 'Stats_desc_NetTrade/viet_NETtrade_perc.htm',
           covariate.labels=c("Année","Pays","Exportations nettes"),
           title="Exportations nettes en US$ entre 2015 et 2021")
 

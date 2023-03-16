@@ -14,7 +14,7 @@ dat$year = str_remove_all(dat$year, "X")
 
 dat$year = str_replace_all(dat$year, "\\.", "-")
 
-dat = dat %>% drop_na(region)
+dat = dat %>% drop_na(region) %>% filter(year <= "2019-11-01")
 
 dat$year = ymd(dat$year)
 
@@ -39,7 +39,7 @@ df2 <- dat %>% select(Country, year, visitors) %>%
          pivot_wider(names_from = Country, values_from = value, 
          values_fill = list(value = 0))
 
-test = ts(df2[[2]], frequency = 12, start = c(2000), end = c(2022,12))
+test = ts(df2[[2]], frequency = 12, start = c(2012), end = c(2019,11))
 
 decomp <- stl(log(test), s.window = "periodic")
 ap.sa <- exp(seasadj(decomp))
@@ -52,7 +52,7 @@ df3 <- dat %>% select(Country, year, visitors) %>%
          pivot_wider(names_from = Country, values_from = value, 
          values_fill = list(value = 0))
 
-test = ts(df3[[2]], frequency = 12, start = c(2000), end = c(2022,12))
+test = ts(df3[[2]], frequency = 12, start = c(2012), end = c(2019,11))
 decomp <- stl(log(test), s.window = "periodic")
 ap.sk <- exp(seasadj(decomp))
 
@@ -63,11 +63,11 @@ df4 <- dat %>% select(Country, year, visitors) %>%
          pivot_wider(names_from = Country, values_from = value, 
          values_fill = list(value = 0))
 
-test = ts(df4[[2]], frequency = 12, start = c(2000), end = c(2022,12))
+test = ts(df4[[2]], frequency = 12, start = c(2012), end = c(2019,11))
 decomp <- stl(log(test), s.window = "periodic")
 ap.v <- exp(seasadj(decomp))
 
-frame_csv = as.data.frame(cbind(year = year2, sk = ap.sk, ca = ap.sa, vt = ap.v))
+frame_csv = as.data.frame(cbind(year = year, sk = ap.sk, ca = ap.sa, vt = ap.v))
 frame_csv = frame_csv %>% pivot_longer(cols = sk:vt, values_to = "value", names_to = "country")
 
 write.csv(frame_csv, "clean_data_desai.csv")
@@ -78,25 +78,25 @@ write.csv(dat_clean, "clean_data.csv")
 ```
 
 ```{r}
-df2 <- dat %>% select(Country, year, visitors) %>% 
-         filter(Country == "China") %>% 
-         group_by(Country, year) %>%
-         summarise(value = sum(visitors)) %>%
-         pivot_wider(names_from = Country, values_from = value, 
-         values_fill = list(value = 0)) %>% 
-         filter(year >= "2012-01-01")
-
-test = ts(df2[[2]], frequency = 12, start = c(2012), end = c(2022,12))
-
-decomp <- stl(log(test), s.window = "periodic")
-ap.sa <- exp(seasadj(decomp))
+#df2 <- dat %>% select(Country, year, visitors) %>% 
+#         filter(Country == "China") %>% 
+#         group_by(Country, year) %>%
+#         summarise(value = sum(visitors)) %>%
+#         pivot_wider(names_from = Country, values_from = value, 
+#         values_fill = list(value = 0)) %>% 
+#         filter(year >= "2012-01-01")
+#
+#test = ts(df2[[2]], frequency = 12, start = c(2012), end = c(2019,11))
+#
+#decomp <- stl(log(test), s.window = "periodic")
+#ap.sa <- exp(seasadj(decomp))
 
 # Désaisonaliser les données de la Chine
 ```
 
 ```{r}
 dat_cor = dat %>% select(Country, year, visitors) %>% 
-         filter(year >= "2012-01-01") %>%
+         filter(year >= "2012-01-01" & year <= "2018-08-01") %>%
          drop_na(visitors) %>% 
          pivot_wider(names_from = Country, values_from = visitors) %>% 
          select(-c(year))
@@ -113,7 +113,8 @@ head(sort(china_cov, decreasing = TRUE), 10)
 
 ```{r}
 dat_cor2 = dat %>% select(Country, year, visitors) %>% 
-         filter(year >= "2012-01-01") %>%
+         filter(year >= "2012-01-01" & year <= "2018-08-01") %>%
+         #filter(Country != c("Taiwan", "Angola", "Nepal", "Côte d'Ivoire", "Gabon", "Rwanda", "Ghana", "Burkina Faso")) %>% 
          drop_na(visitors) %>% 
          group_by(Country) %>% 
          mutate(rate = (visitors - lag(visitors))/lag(visitors)) %>%  
@@ -132,29 +133,29 @@ head(sort(china_cov, decreasing = TRUE), 10)
 ```
 
 ```{r}
-df3 <- dat %>% select(Country, year, visitors) %>% 
-         filter(Country == "South Korea") %>% 
-         group_by(Country, year) %>%
-         summarise(value = sum(visitors)) %>%
-         pivot_wider(names_from = Country, values_from = value, 
-         values_fill = list(value = 0)) %>% 
-         filter(year >= "2012-01-01")
-
-test = ts(df3[[2]], frequency = 12, start = c(2012), end = c(2022,12))
-decomp <- stl(log(test), s.window = "periodic")
-ap.sk <- exp(seasadj(decomp))
-
-df4 <- dat %>% select(Country, year, visitors) %>% 
-         filter(Country == "Vietnam") %>% 
-         group_by(Country, year) %>%
-         summarise(value = sum(visitors)) %>%
-         pivot_wider(names_from = Country, values_from = value, 
-         values_fill = list(value = 0)) %>% 
-         filter(year >= "2012-01-01")
-
-test = ts(df4[[2]], frequency = 12, start = c(2012), end = c(2022,12))
-decomp <- stl(log(test), s.window = "periodic")
-ap.v <- exp(seasadj(decomp))
+#df3 <- dat %>% select(Country, year, visitors) %>% 
+#         filter(Country == "South Korea") %>% 
+#         group_by(Country, year) %>%
+#         summarise(value = sum(visitors)) %>%
+#         pivot_wider(names_from = Country, values_from = value, 
+#         values_fill = list(value = 0)) %>% 
+#         filter(year >= "2012-01-01")
+#
+#test = ts(df3[[2]], frequency = 12, start = c(2012), end = c(2019,11))
+#decomp <- stl(log(test), s.window = "periodic")
+#ap.sk <- exp(seasadj(decomp))
+#
+#df4 <- dat %>% select(Country, year, visitors) %>% 
+#         filter(Country == "Vietnam") %>% 
+#         group_by(Country, year) %>%
+#         summarise(value = sum(visitors)) %>%
+#         pivot_wider(names_from = Country, values_from = value, 
+#         values_fill = list(value = 0)) %>% 
+#         filter(year >= "2012-01-01")
+#
+#test = ts(df4[[2]], frequency = 12, start = c(2012), end = c(2019,11))
+#decomp <- stl(log(test), s.window = "periodic")
+#ap.v <- exp(seasadj(decomp))
 
 
 # Désaisonnaliser les autres pays similaires
@@ -196,7 +197,7 @@ ggplot(frame1, aes(year, value, group = country, color = country)) +
 
 ggsave("p2.png")
 
-frame2 = frame1 %>% filter(year >= "2017-01-01" & year <= "2021-01-01")
+frame2 = frame1 %>% filter(year >= "2015-01-01")
 
 ggplot(frame2, aes(year, value, group = country, color = country)) +
   geom_line() +

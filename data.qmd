@@ -70,11 +70,11 @@ ap.v <- exp(seasadj(decomp))
 frame_csv = as.data.frame(cbind(year = year, sk = ap.sk, ca = ap.sa, vt = ap.v))
 frame_csv = frame_csv %>% pivot_longer(cols = sk:vt, values_to = "value", names_to = "country")
 
-write.csv(frame_csv, "clean_data_desai.csv")
+write.csv(frame_csv, "clean_data_desai_2.csv")
 
 dat_clean = dat %>% filter(Country == c("Vietnam", "South Korea", "China"))
 
-write.csv(dat_clean, "clean_data.csv")
+write.csv(dat_clean, "clean_data_2.csv")
 ```
 
 ```{r}

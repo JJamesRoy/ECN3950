@@ -3,12 +3,17 @@ Stat descriptive
 ```{r}
 
 library(tidyverse)
+library(janitor)
 library(lubridate)
-library(data.table) 
 library(stargazer)
 library(skimr)
 library(xtable)
 library(scales)
+library(readxl)
+library(stringi)
+library(zoo)
+library(forecast)
+library(timetk)
 ```
 
 # data frame de base 
@@ -39,10 +44,11 @@ df_MercTrade <- filter(data_country,series_name=="Merchandise trade (% of GDP)")
 
 plot_Merc <- ggplot(df_MercTrade,aes(x=time,y=value, group=country_name, colour=country_name))+
    geom_line(size=1.2)+
-   scale_y_continuous(breaks=seq(0, 150,15))+
-   labs(title = "Pourcentage du PIB lié au commerce de marchandise",
+   scale_y_continuous(breaks=seq(0, 150,15),
+                      labels = function(x) paste0(x, "%"))+
+   labs(title =NULL, #"Pourcentage du PIB lié au commerce de marchandise",
         x=NULL,
-        y="Pourcentage")+
+        y=NULL)+
    guides(color = guide_legend(title = "Pays"))+
   scale_x_discrete(breaks=seq(2000, 2021, 5))+
    theme_minimal()+
@@ -79,19 +85,19 @@ trade_VIET <- df_MercTrade %>% select(time,country_name, value) %>%
 trade_VIET$value <- round(trade_VIET$value, digits = 2) 
 
 #Creation des tables
-stargazer(trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/Us_trade_perc.htm',
+stargazer(trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = 'PTG_PIB_Merc/Us_trade_perc.htm',
           covariate.labels=c("Année","Pays","Pourcentage"), 
           title="Pourcentage du PIB lié au commerce de marchandise")
 
-stargazer(trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/CH_trade_perc.htm',
+stargazer(trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = 'PTG_PIB_Merc/CH_trade_perc.htm',
           covariate.labels=c("Année","Pays", "Pourcentage"),
           title="Pourcentage du PIB lié au commerce de marchandise")
 
-stargazer(trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/Kor_trade_perc.htm',
+stargazer(trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = 'PTG_PIB_Merc/Kor_trade_perc.htm',
           covariate.labels=c("Année","Pays","Pourcentage"),
           title="Pourcentage du PIB lié au commerce de marchandise")
 
-stargazer(trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = '%PIB_Merc/viet_trade_perc.htm',
+stargazer(trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = 'PTG_PIB_Merc/viet_trade_perc.htm',
           covariate.labels=c("Année","Pays","Pourcentage"),
           title="Pourcentage du PIB lié au commerce de marchandise")
 
@@ -109,7 +115,7 @@ colnames(df1) <- c("Pays","Moyenne","Écart_type","Min","Q1","Med","Q3","Max","H
 
 df1 <- rapply(object = df1, f = round, classes = "numeric", how = "replace", digits = 2)
 
-stargazer(df1,summary=FALSE, rownames=FALSE, out = "%PIB_Merc/desc_4pays.html",
+stargazer(df1,summary=FALSE, rownames=FALSE, out = "PTG_PIB_Merc/desc_4pays.html",
           title = "Statistiques descriptives : Pourcentage du ratio du commerce de marchandise/PIB entre 1990 et 2021 ")
 
 ```
@@ -121,16 +127,21 @@ stargazer(df1,summary=FALSE, rownames=FALSE, out = "%PIB_Merc/desc_4pays.html",
 df_NetTrade_GS <- filter(data_country,series_name=="Net trade in goods and services (BoP, current US$)")
 options(scipen=999)
 
+df_NetTrade_GS$value <- df_NetTrade_GS$value/1000000
+
 plot_trade <- ggplot(df_NetTrade_GS,aes(x=time,y=value, group=country_name, colour=country_name))+
    geom_line(size=1.2)+
-   scale_y_continuous(breaks=seq(-500000000000, 500000000000,500000000000/3),labels = scientific   labs(title = "Exportations nettes en US$ entre 1990 et 2021",
+   scale_y_continuous(breaks=seq(-500000, 500000,500000/2))+#labels = scientific)+
+   labs(title = NULL, #"Exportations nettes en US$ entre 1990 et 2021",
         x=NULL,
-        y="Exportation nest")+tes
+        y="Exportations nettes")+
    guides(color = guide_legend(title = "Pays"))+
   scale_x_discrete(breaks=seq(2000, 2021, 5))+
    theme_minimal()+
-  theme(plot.title = element_text(size=22)16        axis.text=element_text(size=12,face="bold"),
-        axis.title=element_text(size=16,fac        legend.text = element_text(size = 14),
+  theme(plot.title = element_text(size=16),
+        axis.text=element_text(size=12,face="bold"),
+        axis.title=element_text(size=16,),
+        legend.text = element_text(size = 14),
         legend.title = element_text(size=16,face="bold"))
 
 
@@ -164,8 +175,8 @@ Net_trade_VIET$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(
 
 
 #Creation des tables
-stargazer(Net_trade_US[17:23, ],summary=FALSE, rownames=FALSE,outtype = "text", = 'Stats_desc_NetTrade/Us_NETtrade_perc.htm',
-          covariate.labels=c("Année","Pays","Exportation Nes nettes"), 
+stargazer(Net_trade_US[17:23, ],summary=FALSE, rownames=FALSE,type = "text",out = 'Stats_desc_NetTrade/Us_NETtrade_perc.htm',
+          covariate.labels=c("Année","Pays","Exportations nettes"), 
           title="Exportations nettes en US$ entre 2015 et 2021")
 
 stargazer(Net_trade_CH[17:23, ],summary=FALSE, rownames=FALSE,type = "text",out = 'Stats_desc_NetTrade/CH_NETtrade_perc.htm',
@@ -202,13 +213,149 @@ df_trade$p100 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trad
 colnames(df_trade) <- c("Pays","Moyenne","Écart_type","Min","Q1","Med","Q3","Max","Hist")
 
 stargazer(df_trade,summary=FALSE, rownames=FALSE, out = "Stats_desc_NetTrade/descTrade_4pays.htm",
-          title = "Statistiques descriptives : Exportations nettes US$ entre 1990 et 2021")
+          title = "Statistiques descriptives : Exportations nettes en US$ entre 1990 et 2021")
 
  # paste(format(round(Net_trade_US$value / 1e6, 1), trim = TRUE), "M")
 
 ```
 
+# Donnée tourisme
+
+```{r}
+
+df <- read.csv("clean_data.csv")
+
+agg_tbl <- df %>% group_by(year(year),Country) %>% 
+  summarise(total_tourit=sum(visitors)) 
+
+colnames(agg_tbl) <- c("Temps","Pays","Tourisme")
+
+
+agg_tbl <- agg_tbl[agg_tbl$Temps >= "2012" & agg_tbl$Temps <="2018", ]
+
+table <- agg_tbl %>% group_by(Pays) %>%
+  skim() %>% 
+   yank("numeric") %>% 
+  select(-c(n_missing,skim_variable,complete_rate))
+
+table <- table[4:6,]
+colnames(table) <- c("Pays","Moyenne","Écart_type","Min","Q1","Med","Q3","Max","Hist")
+
+table <- rapply(object = table, f = round, classes = "numeric", how = "replace", digits = 2)
+
+stargazer(table,summary=FALSE, rownames=FALSE, out = "descTourisme_4pays.htm",type ="text",
+          title = "Statistiques descriptives : Tourisme aux États-Unis entre 2012 et 2018 ")
+
+
+ggplot(agg_tbl,aes(x=Temps,y=Tourisme, group=Pays, fill=Pays))+
+   geom_col(position="dodge")+
+   labs(title = NULL,#"Tourisme aux États-Unis entre 2012 et 2018"
+        x=NULL,
+        y="Touristes")+
+   #guides(color = guide_legend(title = "Pays"))+
+  #scale_x_discrete(n.breaks=5)+
+  scale_fill_discrete(labels=c('Chine', 'Corée du Sud',"Vietnam"))+
+   theme_minimal()+
+  theme(plot.title = element_text(size=16),
+        axis.text=element_text(size=12,face="bold"),
+        axis.title=element_text(size=16,),
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size=16,face="bold"))
+
+
+```
+
+
+-----------------------------------------------------------------------------------
+
+# Nouvelle base de donnée mensuelle
+```{r}
+
+dat_pays <- read_excel("country.xlsx")
+
+dat_pays$CTYNAME <- dat_pays$CTYNAME %>% 
+  str_replace_all("China","Chine") %>% 
+  str_replace_all("Korea, South","CoréeSud")
+
+dat <- filter(dat_pays, CTYNAME %in% c("Chine", "CoréeSud","Vietnam"))
+
+dat <- dat[dat$year >=2010 & dat$year <=2019, ]
+
+
+dat_import <- dat %>% select('year':'IDEC') %>% 
+  pivot_longer(cols = starts_with("I"),
+                     names_to = "Mois",
+                     values_to = "Import") 
+
+
+  
+
+dat_export <- dat %>% select('year':'CTYNAME',"EJAN":"EDEC") %>% 
+  pivot_longer(cols = starts_with("E"),
+                     names_to = "Mois",
+                     values_to = "Export") 
+
+
+dat_import$Mois <- stri_sub(dat_import$Mois,2)
+dat_export$Mois <- stri_sub(dat_export$Mois,2)
+
+dat_commerce <- left_join(dat_import,dat_export)
+
+dat_commerce$Mois <- match(dat_commerce$Mois,str_to_upper(month.abb))
+
+dat_commerce$Date <-as.yearmon(paste(dat_commerce$year, dat_commerce$Mois), format = "%Y %m ")
+
+
+dat_commerce <- dat_commerce[,c(7,3,5,6)]
+
+
+lst1 <- split(dat_commerce, dat_commerce$CTYNAME)
+
+ts_import <- lapply(lst1, function(u) ts(u$Import, frequency = 12, start = c(2010,1), end = c(2019,11)))
+ts_export <- lapply(lst1, function(u) ts(u$Export, frequency = 12, start = c(2010,1), end = c(2019,11)))
 
 
 
+## Désaisonalisation des données 
+#Chine
+decomp_C <- stl(log(ts_import$Chine), s.window="periodic")
+Chine_ts <- exp(seasadj(decomp_C))
+
+autoplot(cbind(ts_import$Chine, SeasonallyAdjusted=Chine_ts)) +
+  theme_minimal()
+
+
+
+# Corée du Sud
+decomp_CS <- stl(log(ts_import$CoréeSud), s.window="periodic")
+CS_ts <- exp(seasadj(decomp_CS))
+
+autoplot(cbind(ts_import$CoréeSud, SeasonallyAdjusted=CS_ts)) +
+  theme_minimal()
+
+# Vietnam
+decomp_VIET <- stl(log(ts_import$Vietnam), s.window="periodic")
+Viet_ts <- exp(seasadj(decomp_VIET))
+
+autoplot(cbind(ts_import$Vietnam, SeasonallyAdjusted=Viet_ts)) +
+  theme_minimal()
+
+
+dat_chine <- as.data.frame(tk_tbl(ts_import$Chine,start = c(2010,1), freq = 12))  
+
+dat_chine <- 
+  dat_chine %>%
+    mutate( # convert to Date type using lubridate
+        year=year(index), # extract parts
+        month=month.abb[month(index)]
+        ) %>% 
+  subset(select = -index) 
+
+pivot_wider(dat_chine,names_from = month,values_from = value)
+
+mean(ts_import$Chine)
+
+
+
+```
 

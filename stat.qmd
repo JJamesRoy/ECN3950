@@ -351,11 +351,11 @@ dat_chine <-
         ) %>% 
   subset(select = -index) 
 
-pivot_wider(dat_chine,names_from = month,values_from = value)
+dat_chine1 <- pivot_wider(dat_chine,names_from = month,values_from = value)
 
 mean(ts_import$Chine)
 
-
+dat_chine1$mean <- apply(dat_chine1[,2:6], 1, mean)
 
 ```
 

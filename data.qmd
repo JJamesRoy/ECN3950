@@ -4,17 +4,22 @@ library(stringr)
 library(lubridate)
 library(scales)
 
-dat = read.csv("data.csv")
+```
 
-dat = dat %>% pivot_longer(cols = X2000.01.01:X2022.12.01, values_to = "visitors", names_to = "year")
+```{r}
+dat = read.csv("data.csv") # Lire les données
 
-dat = dat %>% select(-c("X", "X1"))
+dat = dat %>% pivot_longer(cols = X2000.01.01:X2022.12.01, values_to = "visitors", names_to = "year") # Pivoter les données pour pouvoir les nettoyer
+
+dat = dat %>% select(-c("X", "X1", "X.1"))
 
 dat$year = str_remove_all(dat$year, "X")
 
 dat$year = str_replace_all(dat$year, "\\.", "-")
 
-dat = dat %>% drop_na(region) %>% filter(year <= "2019-11-01")
+# Nettoyage
+
+dat = dat %>% drop_na(region) %>% filter(year <= "2019-11-01") # Utiliser les données pré-covid
 
 dat$year = ymd(dat$year)
 
@@ -22,10 +27,6 @@ year = dat %>% select(year) %>%
   filter(year >= "2012-01-01")
 
 year = unique(year)
-
-year2 = dat %>% select(year)
-
-year2 = unique(year2)
 
 
 ```
@@ -42,7 +43,7 @@ df2 <- dat %>% select(Country, year, visitors) %>%
 test = ts(df2[[2]], frequency = 12, start = c(2012), end = c(2019,11))
 
 decomp <- stl(log(test), s.window = "periodic")
-ap.sa <- exp(seasadj(decomp))
+ap.sa <- exp(seasadj(decomp)) #Désaisonnalisation de la Chine
 
 
 df3 <- dat %>% select(Country, year, visitors) %>% 
@@ -54,7 +55,7 @@ df3 <- dat %>% select(Country, year, visitors) %>%
 
 test = ts(df3[[2]], frequency = 12, start = c(2012), end = c(2019,11))
 decomp <- stl(log(test), s.window = "periodic")
-ap.sk <- exp(seasadj(decomp))
+ap.sk <- exp(seasadj(decomp)) #Désaisonnalisation de la Corée du Sud
 
 df4 <- dat %>% select(Country, year, visitors) %>% 
          filter(Country == "Vietnam") %>% 
@@ -65,33 +66,18 @@ df4 <- dat %>% select(Country, year, visitors) %>%
 
 test = ts(df4[[2]], frequency = 12, start = c(2012), end = c(2019,11))
 decomp <- stl(log(test), s.window = "periodic")
-ap.v <- exp(seasadj(decomp))
+ap.v <- exp(seasadj(decomp)) #Désaisonnalisation du Vietnam
 
 frame_csv = as.data.frame(cbind(year = year, sk = ap.sk, ca = ap.sa, vt = ap.v))
-frame_csv = frame_csv %>% pivot_longer(cols = sk:vt, values_to = "value", names_to = "country")
+frame_csv = frame_csv %>% pivot_longer(cols = sk:vt, values_to = "value", names_to = "country") # Création d'un dataset avec les nouvelles données
 
 write.csv(frame_csv, "clean_data_desai_2.csv")
 
 dat_clean = dat %>% filter(Country == c("Vietnam", "South Korea", "China"))
 
 write.csv(dat_clean, "clean_data_2.csv")
-```
 
-```{r}
-#df2 <- dat %>% select(Country, year, visitors) %>% 
-#         filter(Country == "China") %>% 
-#         group_by(Country, year) %>%
-#         summarise(value = sum(visitors)) %>%
-#         pivot_wider(names_from = Country, values_from = value, 
-#         values_fill = list(value = 0)) %>% 
-#         filter(year >= "2012-01-01")
-#
-#test = ts(df2[[2]], frequency = 12, start = c(2012), end = c(2019,11))
-#
-#decomp <- stl(log(test), s.window = "periodic")
-#ap.sa <- exp(seasadj(decomp))
-
-# Désaisonaliser les données de la Chine
+# Création de deux dataset en .csv afin de les utiliser pour les stat descriptives
 ```
 
 ```{r}
@@ -114,7 +100,6 @@ head(sort(china_cov, decreasing = TRUE), 10)
 ```{r}
 dat_cor2 = dat %>% select(Country, year, visitors) %>% 
          filter(year >= "2012-01-01" & year <= "2018-08-01") %>%
-         #filter(Country != c("Taiwan", "Angola", "Nepal", "Côte d'Ivoire", "Gabon", "Rwanda", "Ghana", "Burkina Faso")) %>% 
          drop_na(visitors) %>% 
          group_by(Country) %>% 
          mutate(rate = (visitors - lag(visitors))/lag(visitors)) %>%  
@@ -133,47 +118,24 @@ head(sort(china_cov, decreasing = TRUE), 10)
 ```
 
 ```{r}
-#df3 <- dat %>% select(Country, year, visitors) %>% 
-#         filter(Country == "South Korea") %>% 
-#         group_by(Country, year) %>%
-#         summarise(value = sum(visitors)) %>%
-#         pivot_wider(names_from = Country, values_from = value, 
-#         values_fill = list(value = 0)) %>% 
-#         filter(year >= "2012-01-01")
-#
-#test = ts(df3[[2]], frequency = 12, start = c(2012), end = c(2019,11))
-#decomp <- stl(log(test), s.window = "periodic")
-#ap.sk <- exp(seasadj(decomp))
-#
-#df4 <- dat %>% select(Country, year, visitors) %>% 
-#         filter(Country == "Vietnam") %>% 
-#         group_by(Country, year) %>%
-#         summarise(value = sum(visitors)) %>%
-#         pivot_wider(names_from = Country, values_from = value, 
-#         values_fill = list(value = 0)) %>% 
-#         filter(year >= "2012-01-01")
-#
-#test = ts(df4[[2]], frequency = 12, start = c(2012), end = c(2019,11))
-#decomp <- stl(log(test), s.window = "periodic")
-#ap.v <- exp(seasadj(decomp))
-
-
-# Désaisonnaliser les autres pays similaires
-```
-
-```{r}
 
 frame = as.data.frame(cbind(year = year, sk = log(ap.sk), ca = log(ap.sa), vt = log(ap.v)))
 frame = frame %>% pivot_longer(cols = sk:vt, values_to = "value", names_to = "country")
+# Création de données utilisant les logs des données
 
 frame1 = as.data.frame(cbind(year = year, rate_sk = (as.vector(ap.sk)-lag(as.vector(ap.sk)))/lag(as.vector(ap.sk)),
          rate_ca = (as.vector(ap.sa)-lag(as.vector(ap.sa)))/lag(as.vector(ap.sa)),
          rate_vt = (as.vector(ap.v)-lag(as.vector(ap.v)))/lag(as.vector(ap.v))))
 frame1 = frame1 %>% pivot_longer(cols = rate_sk:rate_vt, values_to = "value", names_to = "country")
+# Création de données utilisant le taux de croissance des données
 
 
 
 
+```
+
+```{r}
+# Création de différents graphiques sur les touristes
 ggplot(frame, aes(year, value, group = country, color = country)) +
   geom_line() +
   labs(y = "Log du nombre de touristes",
@@ -225,30 +187,15 @@ dat_model = dat_model %>% mutate(china = ifelse(country == "ca", 1, 0))
 dat_model$did = dat_model$china*dat_model$sanction
 
 dat_model$did2 = dat_model$china*dat_model$sanction2
+# Peaufinage du dataset pour la 1ere régression
 
 did_model = lm(value ~ year + sanction + china + did, data = dat_model)
 summary(did_model)
 
 did_model_alt = lm(value ~ year + sanction2 + china + did2, data = dat_model)
 summary(did_model_alt)
-```
 
-```{r}
-#dat_mod2 = frame1 %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
-#
-#dat_mod2 = dat_mod2 %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
-#
-#dat_mod2 = dat_mod2 %>% mutate(china = ifelse(country == "rate_ca", 1, 0))
-#
-#dat_mod2$did = dat_mod2$china*dat_mod2$sanction
-#
-#dat_mod2$did2 = dat_mod2$china*dat_mod2$sanction2
-#
-#did_model2 = lm(value ~ year + sanction + china + did, data = dat_mod2)
-#summary(did_model2)
-#
-#did_model2_alt = lm(value ~ year + sanction2 + china + did2, data = dat_mod2)
-#summary(did_model2)
+# Deux régressions 
 ```
 
 ```{r}
@@ -262,6 +209,7 @@ dat_mod3 = dat_mod3 %>% mutate(china = ifelse(country == "ca", 1, 0))
 dat_mod3$did = dat_mod3$china*dat_mod3$sanction
 
 dat_mod3$did2 = dat_mod3$china*dat_mod3$sanction2
+# Peaufinage du dataset pour la 2e régression
 
 did_model3 = lm(value ~ year + sanction + china + did, data = dat_mod3)
 summary(did_model3)
@@ -274,6 +222,8 @@ summary(did_model3_alt)
 library(stargazer)
 
 stargazer(did_model, did_model_alt, did_model3, did_model3_alt, title="Résultat des régressions", align=TRUE, dep.var.labels=c("Nombre de touristes","Log du nombre"), covariate.labels=c("Mois","Sanction", "Sanction 2", "Chine", "Dif. en Dif.", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models_sk.htm")
+
+#Création d'un tableau pour la 1ere régression
 ```
 
 ```{r}

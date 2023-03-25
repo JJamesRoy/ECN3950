@@ -144,10 +144,10 @@ ggplot(frame, aes(year, value, group = country, color = country)) +
        x = "Temps",
        color = "Pays") +
   theme_minimal() +
-  theme(text = element_text(size = 30)) +
+  theme(text = element_text(size = 12)) +
   scale_color_discrete(labels=(c("Chine", "Corée du Sud", "Vietnam")))
 
-ggsave("p1.png")
+ggsave("p1.png", width = 8, height =5)
 
 ggplot(frame1, aes(year, value, group = country, color = country)) +
   geom_line() +
@@ -156,7 +156,6 @@ ggplot(frame1, aes(year, value, group = country, color = country)) +
        color = "Pays") +
   theme_minimal() +
   theme(text = element_text(size = 30)) +
-  scale_y_continuous(labels = percent, limits = c(-1,1)) +
   scale_color_discrete(labels=(c("Chine", "Corée du Sud", "Vietnam")))
 
 ggsave("p2.png")
@@ -169,11 +168,10 @@ ggplot(frame2, aes(year, value, group = country, color = country)) +
        x = "Temps",
        color = "Pays") +
   theme_minimal() +
-  theme(text = element_text(size = 30)) +
-  scale_y_continuous(labels = percent, limits = c(-1,1)) +
+  theme(text = element_text(size = 12)) +
   scale_color_discrete(labels=(c("Chine", "Corée du Sud", "Vietnam")))
 
-ggsave("p3.png")
+ggsave("p3.png", width = 8, height =5)
 ```
 
 ```{r}
@@ -300,4 +298,26 @@ model_es = lm(value ~ . -sanction2 -did2 -country -did -sanction, data = dat_es)
 summary(model_es)
 
 #Regression avec FE pour le temps, pour les lag et pour les lead
+```
+
+```{r}
+# Régression pure avec trois pays
+did_model = lm(value ~ sanction + china + did, data = dat_model)
+summary(did_model)
+
+did_model_alt = lm(value ~ sanction2 + china + did2, data = dat_model)
+summary(did_model_alt)
+```
+
+```{r}
+# Régression avec controle pour pays et année (FIXED EFFECTS)
+dat_model2 = dummy_cols(dat_model, select_columns = c("year", "country"), remove_first_dummy = TRUE)
+
+dat_model2 = dat_model2 %>% select(-china)
+
+did_model = lm(value ~ . -year -did2 -sanction2 -country, data = dat_model2)
+summary(did_model)
+
+did_model_alt = lm(value ~ . -year -did -sanction -country, data = dat_model2)
+summary(did_model_alt)
 ```

@@ -4,7 +4,6 @@ library(stringr)
 library(lubridate)
 library(scales)
 library(fastDummies)
-#library(MASS)
 
 ```
 
@@ -274,9 +273,9 @@ stargazer(did_model_vt, did_model_alt_vt, did_model3_vt, did_model3_alt_vt, titl
 
 ```{r}
 
-month = seq(95) 
+month = seq(95) # 95 car on a une séquence de 95 mois dans les données
 
-t = 80
+t = 80 # la sanction est arrivée au 80 t de la série
 
 dat_e = dat_model %>% group_by(country) %>% 
   mutate(relative = month - t) %>%  # Créé une variable relative qui est négative avant la sanction et positive après

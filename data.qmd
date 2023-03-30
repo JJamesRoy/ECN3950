@@ -4,6 +4,7 @@ library(stringr)
 library(lubridate)
 library(scales)
 library(fastDummies)
+library(stargazer)
 
 ```
 
@@ -175,98 +176,38 @@ ggsave("p3.png", width = 8, height =5)
 
 ```{r}
 dat_model = as.data.frame(cbind(year = year, sk = ap.sk, ca = ap.sa, vt = ap.v))
-dat_model = dat_model%>% pivot_longer(cols = sk:vt, values_to = "value", names_to = "country")
+
+dat_model = dat_model %>% mutate(mean = rowMeans(dat_model[,c('sk', 'vt')], na.rm=TRUE))
+
+dat_model = dat_model%>% pivot_longer(cols = sk:mean, values_to = "value", names_to = "country")
 
 dat_model = dat_model %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
-
-dat_model = dat_model %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
 
 dat_model = dat_model %>% mutate(china = ifelse(country == "ca", 1, 0))
 
 dat_model$did = dat_model$china*dat_model$sanction
-
-dat_model$did2 = dat_model$china*dat_model$sanction2
 # Peaufinage du dataset pour la 1ere régression
 
-did_model = lm(value ~ year + sanction + china + did, data = dat_model)
-summary(did_model)
-
-did_model_alt = lm(value ~ year + sanction2 + china + did2, data = dat_model)
-summary(did_model_alt)
-
-# Deux régressions
 ```
 
 ```{r}
-dat_mod3 = frame %>% filter(country != "vt") %>% 
-  mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
+#df3 = df3 %>% filter(year >= "2012-01-01")
+#df4 = df4 %>% filter(year >= "2012-01-01")
+#df2 = df2 %>% filter(year >= "2012-01-01")
+#
+#dat_nmod = as.data.frame(cbind(year = year, sk = df3[[2]], ca = df2[[2]], vt = df4[[2]]))
+#
+#dat_nmod = dat_nmod %>% mutate(mean = rowMeans(dat_nmod[,c('sk', 'vt')], na.rm=TRUE))
+#
+#dat_nmod = dat_nmod %>% pivot_longer(cols = sk:mean, values_to = "value", names_to = #"country")
+#
+#dat_nmod = dat_nmod %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
+#
+#dat_nmod = dat_nmod %>% mutate(china = ifelse(country == "ca", 1, 0))
+#
+#dat_nmod$did = dat_nmod$china*dat_nmod$sanction
 
-dat_mod3 = dat_mod3 %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
 
-dat_mod3 = dat_mod3 %>% mutate(china = ifelse(country == "ca", 1, 0))
-
-dat_mod3$did = dat_mod3$china*dat_mod3$sanction
-
-dat_mod3$did2 = dat_mod3$china*dat_mod3$sanction2
-# Peaufinage du dataset pour la 2e régression
-
-did_model3 = lm(value ~ year + sanction + china + did, data = dat_mod3)
-summary(did_model3)
-
-did_model3_alt = lm(value ~ year + sanction2 + china + did2, data = dat_mod3)
-summary(did_model3_alt)
-```
-
-```{r}
-library(stargazer)
-
-stargazer(did_model, did_model_alt, did_model3, did_model3_alt, title="Résultat des régressions", align=TRUE, dep.var.labels=c("Nombre de touristes","Log du nombre"), covariate.labels=c("Mois","Sanction", "Sanction 2", "Chine", "Dif. en Dif.", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models_sk.htm")
-
-#Création d'un tableau pour la 1ere régression
-```
-
-```{r}
-dat_model_vt = as.data.frame(cbind(year = year, ca = ap.sa, vt = ap.v))
-dat_model_vt = dat_model_vt%>% pivot_longer(cols = ca:vt, values_to = "value", names_to = "country")
-
-dat_model_vt = dat_model_vt %>% mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
-
-dat_model_vt = dat_model_vt %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
-
-dat_model_vt = dat_model_vt %>% mutate(china = ifelse(country == "ca", 1, 0))
-
-dat_model_vt$did = dat_model_vt$china*dat_model_vt$sanction
-
-dat_model_vt$did2 = dat_model_vt$china*dat_model_vt$sanction2
-
-did_model_vt = lm(value ~ year + sanction + china + did, data = dat_model_vt)
-summary(did_model_vt)
-
-did_model_alt_vt = lm(value ~ year + sanction2 + china + did2, data = dat_model_vt)
-summary(did_model_alt_vt)
-```
-
-```{r}
-dat_mod3_vt = frame %>% filter(country != "sk") %>% 
-  mutate(sanction = ifelse(year >= "2018-08-01", 1, 0))
-
-dat_mod3_vt = dat_mod3_vt %>% mutate(sanction2 = ifelse(year >= "2018-09-01", 1, 0))
-
-dat_mod3_vt = dat_mod3_vt %>% mutate(china = ifelse(country == "ca", 1, 0))
-
-dat_mod3_vt$did = dat_mod3_vt$china*dat_mod3_vt$sanction
-
-dat_mod3_vt$did2 = dat_mod3_vt$china*dat_mod3_vt$sanction2
-
-did_model3_vt = lm(value ~ year + sanction + china + did, data = dat_mod3_vt)
-summary(did_model3_vt)
-
-did_model3_alt_vt = lm(value ~ year + sanction2 + china + did2, data = dat_mod3_vt)
-summary(did_model3_alt_vt)
-```
-
-```{r}
-stargazer(did_model_vt, did_model_alt_vt, did_model3_vt, did_model3_alt_vt, title="Résultat des régressions", align=TRUE, dep.var.labels=c("Nombre de touristes","Log du nombre"), covariate.labels=c("Mois","Sanction", "Sanction 2", "Chine", "Dif. en Dif.", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models_vt.htm")
 ```
 
 \-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-- COMMENTAIRE PROF\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
@@ -285,38 +226,111 @@ dat_e = dat_model %>% group_by(country) %>%
 dat_e$lead = dat_e$china*dat_e$relative_n # Créé la variable lead
 dat_e$lag = dat_e$china*dat_e$relative_p # Créé la variable lag
 
-dat_es = dummy_cols(dat_e, select_columns = c("year","lead","lag"), remove_first_dummy = TRUE, remove_selected_columns = TRUE) # Créé les dummy pour les n-1 lag, lead et les effets fixes pour les mois
+dat_e = dat_e %>% mutate(time0 = ifelse(relative == 0 & country == "ca", 1, 0))
+
+dat_e = dat_e %>% mutate(month = month(ymd(year)))
+                         
+dat_e_vt = dat_e %>% filter(country == "ca" | country == "vt")
+
+dat_e_sk = dat_e %>% filter(country == "ca" | country == "sk")
+
+dat_e_mean = dat_e %>% filter(country == "ca" | country == "mean")
+
+```
+
+```{r}
+#dat_e_2 = dat_nmod %>% group_by(country) %>% 
+#  mutate(relative = month - t) %>%  # Créé une variable relative qui est négative avant la #sanction et positive après
+#  mutate(relative_n = ifelse(relative < 0, relative, 0)) %>%  # Isole les variables #négatives
+#  mutate(relative_p = ifelse(relative > 0, relative, 0)) # Isole les varibles positives
+#
+#dat_e_2$lead = dat_e_2$china*dat_e_2$relative_n # Créé la variable lead
+#dat_e_2$lag = dat_e_2$china*dat_e_2$relative_p # Créé la variable lag
+#
+#dat_e_2 = dat_e_2 %>% mutate(time0 = ifelse(relative == 0 & country == "ca", 1, 0))
+#
+#dat_e_2 = dat_e_2 %>% mutate(month = month(ymd(year)))
+#                         
+#dat_e_vt_2 = dat_e_2 %>% filter(country == "ca" | country == "vt")
+#
+#dat_e_sk_2 = dat_e_2 %>% filter(country == "ca" | country == "sk")
+#
+#dat_e_mean_2 = dat_e_2 %>% filter(country == "ca" | country == "mean")
+```
+
+```{r}
+dat_es = dummy_cols(dat_e, select_columns = c("year","lead","lag"), remove_first_dummy = TRUE) # Créé les dummy pour les n-1 lag, lead et les effets fixes pour les mois
+
+dat_es_vt = dummy_cols(dat_e_vt, select_columns = c("lead","lag", "year"), remove_first_dummy = TRUE)
+
+dat_es_sk = dummy_cols(dat_e_sk, select_columns = c("year","lead","lag"), remove_first_dummy = TRUE)
+
+dat_es_mean = dummy_cols(dat_e_mean, select_columns = c("year","lead","lag"), remove_first_dummy = TRUE)
+```
+
+```{r}
+#dat_es_2 = dummy_cols(dat_e, select_columns = c("year","lead","lag", "month"), #remove_first_dummy = TRUE) # Créé les dummy pour les n-1 lag, lead et les effets fixes pour #les mois
+#
+#dat_es_vt_2 = dummy_cols(dat_e_vt, select_columns = c("lead","lag", "year", "month"), #remove_first_dummy = TRUE)
+#
+#dat_es_sk_2 = dummy_cols(dat_e_sk, select_columns = c("year","lead","lag", "month"), #remove_first_dummy = TRUE)
+#
+#dat_es_mean_2 = dummy_cols(dat_e_mean, select_columns = c("year","lead","lag", "month"), #remove_first_dummy = TRUE)
 ```
 
 ```{r}
 # Régression event-study
 dat_es = dat_es %>% select( -c(lead_0, relative, relative_p, relative_n))
+#dat_es_2 = dat_es_2 %>% select( -c(lead_0, relative, relative_p, relative_n))
 
-
-model_es = lm(value ~ . -sanction2 -did2 -country -did -sanction, data = dat_es)
+model_es = lm(value ~ . -country -did -sanction -month -year -lead -lag, data = dat_es)
 summary(model_es)
+#model_es_2 = lm(value ~ . -country -did -sanction -month -year -lead -lag, data = dat_es_2)
+#summary(model_es_2)
 
 #Regression avec FE pour le temps, pour les lag et pour les lead
+```
+
+```{r}
+dat_es_vt = dat_es_vt %>% select( -c(lead_0, relative, relative_p, relative_n))
+
+
+model_es_vt = lm(value ~ .-country -did -sanction -month -year -lead -lag, data = dat_es_vt)
+summary(model_es_vt)
+```
+
+```{r}
+dat_es_sk = dat_es_sk %>% select( -c(lead_0, relative, relative_p, relative_n))
+
+
+model_es_sk = lm(value ~ . -country -did -sanction -month -year -lead -lag, data = dat_es_sk)
+summary(model_es_sk)
+```
+
+```{r}
+dat_es_mean = dat_es_mean %>% select( -c(lead_0, relative, relative_p, relative_n))
+
+
+model_es_mean = lm(value ~ . -country -did -sanction -month -year -lead -lag, data = dat_es_mean)
+summary(model_es_mean)
 ```
 
 ```{r}
 # Régression pure avec trois pays
 did_model = lm(value ~ sanction + china + did, data = dat_model)
 summary(did_model)
-
-did_model_alt = lm(value ~ sanction2 + china + did2, data = dat_model)
-summary(did_model_alt)
 ```
 
 ```{r}
 # Régression avec controle pour pays et année (FIXED EFFECTS)
 dat_model2 = dummy_cols(dat_model, select_columns = c("year", "country"), remove_first_dummy = TRUE)
 
-dat_model2 = dat_model2 %>% select(-china)
+dat_model2 = dat_model2 %>% select(-c("country_mean", "country_sk"))
 
-did_model = lm(value ~ . -year -did2 -sanction2 -country, data = dat_model2)
-summary(did_model)
+did_model2 = lm(value ~ . -year -country, data = dat_model2)
+summary(did_model2)
+```
 
-did_model_alt = lm(value ~ . -year -did -sanction -country, data = dat_model2)
-summary(did_model_alt)
+```{r}
+stargazer(did_model, did_model2, title="Résultat des régressions ES", keep = c("china", "did", "sanction"), align=TRUE, dep.var.labels=c("Nombre de touristes"), covariate.labels=c("Chine", "Sanction", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models.htm")
 ```

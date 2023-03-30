@@ -279,25 +279,43 @@ dat_es_mean = dummy_cols(dat_e_mean, select_columns = c("year","lead","lag"), re
 ```
 
 ```{r}
-# Régression event-study
-dat_es = dat_es %>% select( -c(lead_0, relative, relative_p, relative_n))
-#dat_es_2 = dat_es_2 %>% select( -c(lead_0, relative, relative_p, relative_n))
-
-model_es = lm(value ~ . -country -did -sanction -month -year -lead -lag, data = dat_es)
-summary(model_es)
-#model_es_2 = lm(value ~ . -country -did -sanction -month -year -lead -lag, data = dat_es_2)
-#summary(model_es_2)
-
-#Regression avec FE pour le temps, pour les lag et pour les lead
-```
-
-```{r}
 dat_es_vt = dat_es_vt %>% select( -c(lead_0, relative, relative_p, relative_n))
 
 
 model_es_vt = lm(value ~ .-country -did -sanction -month -year -lead -lag, data = dat_es_vt)
 summary(model_es_vt)
 ```
+
+```{r}
+coeff_names_es_vt <- names(model_es_vt$coefficients)[grep("(lead|lag)", names(model_es_vt$coefficients))]
+
+# Extraire les valeurs des coefficients correspondants
+coeff_values_es_vt <- as.integer(model_es_vt$coefficients[grep("(lead|lag)", names(model_es_vt$coefficients))])
+
+# Afficher les noms et les valeurs des coefficients correspondants
+coef_es_vt = as.data.frame(cbind(coeff_names_es_vt, V2 = as.integer(coeff_values_es_vt)))
+
+coef_es_vt <- coef_es_vt %>% 
+  mutate(coeff_names_es_vt = as.integer(gsub("[^0-9-]", "", coeff_names_es_vt))) %>% 
+  arrange(coeff_names_es_vt) %>%
+  add_row(coeff_names_es_vt = -1, V2 = "0", .before = 79) %>%
+  add_row(coeff_names_es_vt = 0, V2 = "-5988.27", .before = 80)
+
+coef_es_vt$V2 = as.numeric(coef_es_vt$V2)
+
+coef_es_vt$month = ymd(year$year)
+
+ggplot(coef_es_vt, aes(month, V2)) +
+  geom_line() +
+  labs(y = "Différence en Différence",
+       x = "Temps") +
+  geom_hline(yintercept=20, linetype="dashed", color = "red") +
+  geom_vline(xintercept=as.numeric(coef_es_vt$month[80]), linetype="dashed", color = "red") +
+  theme_minimal()
+
+ggsave("didvt.png", width = 8, height =5)
+```
+
 
 ```{r}
 dat_es_sk = dat_es_sk %>% select( -c(lead_0, relative, relative_p, relative_n))
@@ -308,6 +326,37 @@ summary(model_es_sk)
 ```
 
 ```{r}
+coeff_names_es_sk <- names(model_es_sk$coefficients)[grep("(lead|lag)", names(model_es_sk$coefficients))]
+
+# Extraire les valeurs des coefficients correspondants
+coeff_values_es_sk <- as.integer(model_es_sk$coefficients[grep("(lead|lag)", names(model_es_sk$coefficients))])
+
+# Afficher les noms et les valeurs des coefficients correspondants
+coef_es_sk = as.data.frame(cbind(coeff_names_es_sk, V2 = as.integer(coeff_values_es_sk)))
+
+coef_es_sk <- coef_es_sk %>% 
+  mutate(coeff_names_es_sk = as.integer(gsub("[^0-9-]", "", coeff_names_es_sk))) %>% 
+  arrange(coeff_names_es_sk) %>%
+  add_row(coeff_names_es_sk = -1, V2 = "0", .before = 79) %>%
+  add_row(coeff_names_es_sk = 0, V2 = "-5988.27", .before = 80)
+
+coef_es_sk$V2 = as.numeric(coef_es_sk$V2)
+
+coef_es_sk$month = ymd(year$year)
+
+ggplot(coef_es_sk, aes(month, V2)) +
+  geom_line() +
+  labs(y = "Différence en Différence",
+       x = "Temps") +
+  geom_hline(yintercept=20, linetype="dashed", color = "red") +
+  geom_vline(xintercept=as.numeric(coef_es_sk$month[80]), linetype="dashed", color = "red") +
+  theme_minimal()
+
+ggsave("didsk.png", width = 8, height =5)
+```
+
+
+```{r}
 dat_es_mean = dat_es_mean %>% select( -c(lead_0, relative, relative_p, relative_n))
 
 
@@ -316,10 +365,53 @@ summary(model_es_mean)
 ```
 
 ```{r}
-# Régression pure avec trois pays
-did_model = lm(value ~ sanction + china + did, data = dat_model)
-summary(did_model)
+coeff_names_es_m <- names(model_es_mean$coefficients)[grep("(lead|lag)", names(model_es_mean$coefficients))]
+
+# Extraire les valeurs des coefficients correspondants
+coeff_values_es_m <- as.integer(model_es_mean$coefficients[grep("(lead|lag)", names(model_es_mean$coefficients))])
+
+# Afficher les noms et les valeurs des coefficients correspondants
+coef_es_m = as.data.frame(cbind(coeff_names_es_m, V2 = as.integer(coeff_values_es_m)))
+
+coef_es_m <- coef_es_m %>% 
+  mutate(coeff_names_es_m = as.integer(gsub("[^0-9-]", "", coeff_names_es_m))) %>% 
+  arrange(coeff_names_es_m) %>%
+  add_row(coeff_names_es_m = -1, V2 = "0", .before = 79) %>%
+  add_row(coeff_names_es_m = 0, V2 = "-5988.27", .before = 80)
+
+coef_es_m$V2 = as.numeric(coef_es_m$V2)
+
+coef_es_m$month = ymd(year$year)
+
+ggplot(coef_es_m, aes(month, V2)) +
+  geom_line() +
+  labs(y = "Différence en Différence",
+       x = "Temps") +
+  geom_hline(yintercept=20, linetype="dashed", color = "red") +
+  geom_vline(xintercept=as.numeric(coef_es_m$month[80]), linetype="dashed", color = "red") +
+  theme_minimal()
+
+ggsave("didm.png", width = 8, height =5)
 ```
+
+
+```{r}
+# Régression pure avec trois pays
+did_model = lm(value ~ sanction + china + did, data = dat_model %>% filter(country != "mean"))
+summary(did_model)
+
+did_model_vt = lm(value ~ sanction + china + did, data = dat_model %>% filter(country == "vt" | country == "ca"))
+summary(did_model_vt)
+did_model_sk = lm(value ~ sanction + china + did, data = dat_model %>% filter(country == "sk" | country == "ca"))
+summary(did_model_sk)
+did_model_mean = lm(value ~ sanction + china + did, data = dat_model %>% filter(country == "mean" | country == "ca"))
+```
+
+
+```{r}
+stargazer(did_model, did_model_vt, did_model_sk, did_model_mean, title="Résultat des régressions", keep = c("china", "did", "sanction"), align=TRUE, dep.var.labels=c("Nombre de touristes"), covariate.labels=c("Sanction", "Chine", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models.htm")
+```
+
 
 ```{r}
 # Régression avec controle pour pays et année (FIXED EFFECTS)
@@ -327,10 +419,15 @@ dat_model2 = dummy_cols(dat_model, select_columns = c("year", "country"), remove
 
 dat_model2 = dat_model2 %>% select(-c("country_mean", "country_sk"))
 
-did_model2 = lm(value ~ . -year -country, data = dat_model2)
+did_model2 = lm(value ~ . -year -country, data = dat_model2 %>% filter(country != "mean") )
 summary(did_model2)
+
+did_model2_sk = lm(value ~ . -year -country -country_vt, data = dat_model2 %>% filter(country == "sk" | country == "ca"))
+did_model2_vt = lm(value ~ . -year -country -country_vt, data = dat_model2 %>% filter(country == "vt" | country == "ca"))
+did_model2_mean = lm(value ~ . -year -country -country_vt, data = dat_model2 %>% filter(country == "mean" | country == "ca"))
 ```
 
 ```{r}
-stargazer(did_model, did_model2, title="Résultat des régressions ES", keep = c("china", "did", "sanction"), align=TRUE, dep.var.labels=c("Nombre de touristes"), covariate.labels=c("Chine", "Sanction", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models.htm")
+stargazer(did_model2, did_model2_vt, did_model2_sk, did_model2_mean, title="Résultat des régressions ES", keep = c("china", "did", "sanction"), align=TRUE, dep.var.labels=c("Nombre de touristes"), covariate.labels=c("Sanction", "Chine", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models_fe.htm")
 ```
+

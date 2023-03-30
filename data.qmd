@@ -316,7 +316,6 @@ ggplot(coef_es_vt, aes(month, V2)) +
 ggsave("didvt.png", width = 8, height =5)
 ```
 
-
 ```{r}
 dat_es_sk = dat_es_sk %>% select( -c(lead_0, relative, relative_p, relative_n))
 
@@ -354,7 +353,6 @@ ggplot(coef_es_sk, aes(month, V2)) +
 
 ggsave("didsk.png", width = 8, height =5)
 ```
-
 
 ```{r}
 dat_es_mean = dat_es_mean %>% select( -c(lead_0, relative, relative_p, relative_n))
@@ -394,7 +392,6 @@ ggplot(coef_es_m, aes(month, V2)) +
 ggsave("didm.png", width = 8, height =5)
 ```
 
-
 ```{r}
 # Régression pure avec trois pays
 did_model = lm(value ~ sanction + china + did, data = dat_model %>% filter(country != "mean"))
@@ -407,11 +404,9 @@ summary(did_model_sk)
 did_model_mean = lm(value ~ sanction + china + did, data = dat_model %>% filter(country == "mean" | country == "ca"))
 ```
 
-
 ```{r}
 stargazer(did_model, did_model_vt, did_model_sk, did_model_mean, title="Résultat des régressions", keep = c("china", "did", "sanction"), align=TRUE, dep.var.labels=c("Nombre de touristes"), covariate.labels=c("Sanction", "Chine", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models.htm")
 ```
-
 
 ```{r}
 # Régression avec controle pour pays et année (FIXED EFFECTS)
@@ -430,4 +425,3 @@ did_model2_mean = lm(value ~ . -year -country -country_vt, data = dat_model2 %>%
 ```{r}
 stargazer(did_model2, did_model2_vt, did_model2_sk, did_model2_mean, title="Résultat des régressions ES", keep = c("china", "did", "sanction"), align=TRUE, dep.var.labels=c("Nombre de touristes"), covariate.labels=c("Sanction", "Chine", "Dif. en Dif."), omit.stat=c("LL","ser","f"), no.space=TRUE, out = "models_fe.htm")
 ```
-

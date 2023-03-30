@@ -308,7 +308,8 @@ coef_es_vt$month = ymd(year$year)
 ggplot(coef_es_vt, aes(month, V2)) +
   geom_line() +
   labs(y = "Différence en Différence",
-       x = "Temps") +
+       x = "Temps",
+       title = "Vietnam") +
   geom_hline(yintercept=20, linetype="dashed", color = "red") +
   geom_vline(xintercept=as.numeric(coef_es_vt$month[80]), linetype="dashed", color = "red") +
   theme_minimal()
@@ -346,7 +347,8 @@ coef_es_sk$month = ymd(year$year)
 ggplot(coef_es_sk, aes(month, V2)) +
   geom_line() +
   labs(y = "Différence en Différence",
-       x = "Temps") +
+       x = "Temps",
+       title = "Corée du Sud") +
   geom_hline(yintercept=20, linetype="dashed", color = "red") +
   geom_vline(xintercept=as.numeric(coef_es_sk$month[80]), linetype="dashed", color = "red") +
   theme_minimal()
@@ -384,7 +386,8 @@ coef_es_m$month = ymd(year$year)
 ggplot(coef_es_m, aes(month, V2)) +
   geom_line() +
   labs(y = "Différence en Différence",
-       x = "Temps") +
+       x = "Temps",
+       title = "Moyenne") +
   geom_hline(yintercept=20, linetype="dashed", color = "red") +
   geom_vline(xintercept=as.numeric(coef_es_m$month[80]), linetype="dashed", color = "red") +
   theme_minimal()

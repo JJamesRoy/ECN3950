@@ -1,7 +1,8 @@
-Stat descriptive
+# Stats Descriptives
 
-```{r}
+## Librarie
 
+```{r warning=FALSE}
 library(tidyverse)
 library(janitor)
 library(lubridate)
@@ -14,225 +15,27 @@ library(stringi)
 library(zoo)
 library(forecast)
 library(timetk)
+library(ggpubr)
 ```
 
-# data frame de base 
+# Sats tourisme
 
 ```{r}
-
-data_country <- read_csv("data_country.csv", 
-    col_types = cols(Time = col_number()))
-
-data_country <- clean_names(data_country)
-
-data_country$time <- as.Date(as.character(data_country$time), format = "%Y")
-data_country$time <- format(data_country$time, format="%Y")
-
-data_country$country_name <- data_country$country_name %>% 
-  str_replace_all("United States","États Unis") %>%
-  str_replace_all("China","Chine") %>% 
-  str_replace_all("Korea, Rep.","Corée du Sud")
-```
-
-# Merchandise trade (% of GDP)
-
-```{r}
-
-
-#Extraction du pourcentage de trade 
-df_MercTrade <- filter(data_country,series_name=="Merchandise trade (% of GDP)")
-
-plot_Merc <- ggplot(df_MercTrade,aes(x=time,y=value, group=country_name, colour=country_name))+
-   geom_line(size=1.2)+
-   scale_y_continuous(breaks=seq(0, 150,15),
-                      labels = function(x) paste0(x, "%"))+
-   labs(title =NULL, #"Pourcentage du PIB lié au commerce de marchandise",
-        x=NULL,
-        y=NULL)+
-   guides(color = guide_legend(title = "Pays"))+
-  scale_x_discrete(breaks=seq(2000, 2021, 5))+
-   theme_minimal()+
-  theme(plot.title = element_text(size=16),
-        axis.text=element_text(size=12,face="bold"),
-        axis.title=element_text(size=16,),
-        legend.text = element_text(size = 14),
-        legend.title = element_text(size=16,face="bold"))
-
-#US
-trade_US <- df_MercTrade %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"États Unis"))
-
-trade_US$value <- round(trade_US$value, digits = 2)  
-
-
-#CHine
-trade_CH <- df_MercTrade %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"Chine"))
-
-trade_CH$value <- round(trade_CH$value, digits = 2) 
-
-
-#corée du sud
-trade_KOR <- df_MercTrade %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"Corée du Sud"))
-
-trade_KOR$value <- round(trade_KOR$value, digits = 2) 
-
-#vietnam
-trade_VIET <- df_MercTrade %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"Vietnam"))
-
-trade_VIET$value <- round(trade_VIET$value, digits = 2) 
-
-#Creation des tables
-stargazer(trade_US[17:23, ],summary=FALSE, rownames=FALSE,out = 'PTG_PIB_Merc/Us_trade_perc.htm',
-          covariate.labels=c("Année","Pays","Pourcentage"), 
-          title="Pourcentage du PIB lié au commerce de marchandise")
-
-stargazer(trade_CH[17:23, ],summary=FALSE, rownames=FALSE,out = 'PTG_PIB_Merc/CH_trade_perc.htm',
-          covariate.labels=c("Année","Pays", "Pourcentage"),
-          title="Pourcentage du PIB lié au commerce de marchandise")
-
-stargazer(trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,out = 'PTG_PIB_Merc/Kor_trade_perc.htm',
-          covariate.labels=c("Année","Pays","Pourcentage"),
-          title="Pourcentage du PIB lié au commerce de marchandise")
-
-stargazer(trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,out = 'PTG_PIB_Merc/viet_trade_perc.htm',
-          covariate.labels=c("Année","Pays","Pourcentage"),
-          title="Pourcentage du PIB lié au commerce de marchandise")
-
-
-options(digits = 4)
-df1 <- df_MercTrade %>%
-  group_by(country_name) %>%
-  skim() %>% 
-   yank("numeric") %>% 
-  select(-c(n_missing,skim_variable,complete_rate))
-
-
-colnames(df1) <- c("Pays","Moyenne","Écart_type","Min","Q1","Med","Q3","Max","Hist")
-
-
-df1 <- rapply(object = df1, f = round, classes = "numeric", how = "replace", digits = 2)
-
-stargazer(df1,summary=FALSE, rownames=FALSE, out = "PTG_PIB_Merc/desc_4pays.html",
-          title = "Statistiques descriptives : Pourcentage du ratio du commerce de marchandise/PIB entre 1990 et 2021 ")
-
-```
-
-
-# Net trade in goods and services (BoP, current US$)
-``` {r}
-
-df_NetTrade_GS <- filter(data_country,series_name=="Net trade in goods and services (BoP, current US$)")
-options(scipen=999)
-
-df_NetTrade_GS$value <- df_NetTrade_GS$value/1000000
-
-plot_trade <- ggplot(df_NetTrade_GS,aes(x=time,y=value, group=country_name, colour=country_name))+
-   geom_line(size=1.2)+
-   scale_y_continuous(breaks=seq(-500000, 500000,500000/2))+#labels = scientific)+
-   labs(title = NULL, #"Exportations nettes en US$ entre 1990 et 2021",
-        x=NULL,
-        y="Exportations nettes")+
-   guides(color = guide_legend(title = "Pays"))+
-  scale_x_discrete(breaks=seq(2000, 2021, 5))+
-   theme_minimal()+
-  theme(plot.title = element_text(size=16),
-        axis.text=element_text(size=12,face="bold"),
-        axis.title=element_text(size=16,),
-        legend.text = element_text(size = 14),
-        legend.title = element_text(size=16,face="bold"))
-
-
-# US
-Net_trade_US <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"États Unis"))
-Net_trade_US <- Net_trade_US[-1,]
-
-
-Net_trade_US$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_US$value)
-
-#CHine
-Net_trade_CH <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"Chine"))
-Net_trade_CH <- Net_trade_CH[-1,]
-Net_trade_CH$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_CH$value)
-
-#corée du sud
-Net_trade_KOR <-  df_NetTrade_GS %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"Corée du Sud"))
-Net_trade_KOR <- Net_trade_KOR[-1,]
-Net_trade_KOR$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_KOR$value)
-
-
-#vietnam
-Net_trade_VIET <- df_NetTrade_GS %>% select(time,country_name, value) %>% 
-  filter(str_detect(country_name,"Vietnam"))
-Net_trade_VIET <- Net_trade_VIET[-1,]
-
-Net_trade_VIET$value <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(Net_trade_VIET$value)
-
-
-#Creation des tables
-stargazer(Net_trade_US[17:23, ],summary=FALSE, rownames=FALSE,type = "text",out = 'Stats_desc_NetTrade/Us_NETtrade_perc.htm',
-          covariate.labels=c("Année","Pays","Exportations nettes"), 
-          title="Exportations nettes en US$ entre 2015 et 2021")
-
-stargazer(Net_trade_CH[17:23, ],summary=FALSE, rownames=FALSE,type = "text",out = 'Stats_desc_NetTrade/CH_NETtrade_perc.htm',
-          covariate.labels=c("Année","Pays", "Exportations nettes"),
-          title="Exportations nettes en US$ entre 2015 et 2021")
-
-stargazer(Net_trade_KOR[17:23, ],summary=FALSE, rownames=FALSE,type = "text",out = 'Stats_desc_NetTrade/Kor_NETtrade_perc.htm',
-          covariate.labels=c("Année","Pays","Exportations nettes"),
-          title="Exportations nettes en US$ entre 2015 et 2021")
-
-stargazer(Net_trade_VIET[17:23, ],summary=FALSE, rownames=FALSE,type = "text",out = 'Stats_desc_NetTrade/viet_NETtrade_perc.htm',
-          covariate.labels=c("Année","Pays","Exportations nettes"),
-          title="Exportations nettes en US$ entre 2015 et 2021")
-
-
-
-df_trade <- df_NetTrade_GS %>%
-  group_by(country_name) %>%
-  skim() %>% 
-   yank("numeric") %>% 
-  select(-c(n_missing,skim_variable,complete_rate))
-
-
-
-df_trade$mean <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$mean)
-df_trade$sd <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$sd)
-df_trade$p0 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$p0)
-df_trade$p25 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$p25)
-df_trade$p50 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$p50)
-df_trade$p75 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$p75)
-df_trade$p100 <- label_number(accuracy=0.1, scale_cut=cut_short_scale())(df_trade$p100)
-
-
-colnames(df_trade) <- c("Pays","Moyenne","Écart_type","Min","Q1","Med","Q3","Max","Hist")
-
-stargazer(df_trade,summary=FALSE, rownames=FALSE, out = "Stats_desc_NetTrade/descTrade_4pays.htm",
-          title = "Statistiques descriptives : Exportations nettes en US$ entre 1990 et 2021")
-
- # paste(format(round(Net_trade_US$value / 1e6, 1), trim = TRUE), "M")
-
-```
-
-# Donnée tourisme
-
-```{r}
-
+# Lecture des données
 df <- read.csv("clean_data.csv")
+dat <- read.csv("clean_data_desai_2.csv")
 
+# aggrégation des données par année et par pays
 agg_tbl <- df %>% group_by(year(year),Country) %>% 
   summarise(total_tourit=sum(visitors)) 
 
+# Changement des noms de colonnes
 colnames(agg_tbl) <- c("Temps","Pays","Tourisme")
 
-
+# Selection entre 2012 et 2018
 agg_tbl <- agg_tbl[agg_tbl$Temps >= "2012" & agg_tbl$Temps <="2018", ]
 
+# Tableau de statistiques descriptives 
 table <- agg_tbl %>% group_by(Pays) %>%
   skim() %>% 
    yank("numeric") %>% 
@@ -241,12 +44,15 @@ table <- agg_tbl %>% group_by(Pays) %>%
 table <- table[4:6,]
 colnames(table) <- c("Pays","Moyenne","Écart_type","Min","Q1","Med","Q3","Max","Hist")
 
+# Arrondissement des chiffre à deux decimales après la virgule
 table <- rapply(object = table, f = round, classes = "numeric", how = "replace", digits = 2)
 
+# Tableau finale de statitiques pour le tourisme aux US
 stargazer(table,summary=FALSE, rownames=FALSE, out = "descTourisme_4pays.htm",type ="text",
           title = "Statistiques descriptives : Tourisme aux États-Unis entre 2012 et 2018 ")
 
 
+# Graphique a bande concernant le tourisme au US
 ggplot(agg_tbl,aes(x=Temps,y=Tourisme, group=Pays, fill=Pays))+
    geom_col(position="dodge")+
    labs(title = NULL,#"Tourisme aux États-Unis entre 2012 et 2018"
@@ -263,39 +69,64 @@ ggplot(agg_tbl,aes(x=Temps,y=Tourisme, group=Pays, fill=Pays))+
         legend.title = element_text(size=16,face="bold"))
 
 
+# creation d'une variable pour ou 2016 est egal a 100, permettant de voir le trourisme sur une base 100 pour les trois pays.
+dat$relatif <- 
+  ifelse(dat$country=="sk",100*dat$value/52900.0515,
+         ifelse(dat$country=="ca",100*dat$value/16433.8997,
+                ifelse(dat$country=="vt",100*dat$value/976.8419,NA)))
+
+# graphique représentant le tourisme sur une base 100 pour les trois pays
+dat$year <- ymd(dat$year)
+ggplot(dat, aes(x=year,y=relatif)) + #cbind(ts_import$Chine, SeasonallyAdjusted=Chine_ts
+  geom_line(aes(colour = country))+
+  labs(x=NULL,
+       y="Touristes",
+       caption = "La droite verticale rouge correspond au \nmoment où la sanction a été appliquée à la Chine")+
+  scale_color_discrete(labels = c("Chine", "Corée du Sud", "Vietnam"), name="Pays")+
+  geom_hline(yintercept = 100,lwd=0.3,alpha=.2)+
+  geom_vline(aes(xintercept=as.numeric(dat$year[241])),lwd=0.7,colour="darkred", alpha = 0.3,linetype="longdash")+
+  theme_minimal()
+
+
+
+
 ```
 
+------------------------------------------------------------------------
 
------------------------------------------------------------------------------------
+# Nouvelle base de donnée mensuelle pour l'import
 
-# Nouvelle base de donnée mensuelle
 ```{r}
 
+# importation de la base de donnée
 dat_pays <- read_excel("country.xlsx")
 
+# Changement des noms en français
 dat_pays$CTYNAME <- dat_pays$CTYNAME %>% 
   str_replace_all("China","Chine") %>% 
   str_replace_all("Korea, South","CoréeSud")
 
+# filtre la base des données pour les trois pays mentionné
 dat <- filter(dat_pays, CTYNAME %in% c("Chine", "CoréeSud","Vietnam"))
 
+# selection des données entre 2010 et 2019
 dat <- dat[dat$year >=2010 & dat$year <=2019, ]
 
-
+# selection des données d'import seulement
 dat_import <- dat %>% select('year':'IDEC') %>% 
   pivot_longer(cols = starts_with("I"),
                      names_to = "Mois",
                      values_to = "Import") 
 
 
-  
-
+# selection des données d'export seulement
 dat_export <- dat %>% select('year':'CTYNAME',"EJAN":"EDEC") %>% 
   pivot_longer(cols = starts_with("E"),
                      names_to = "Mois",
                      values_to = "Export") 
 
 
+# préparation de la base de données pour désaisonnalisé 
 dat_import$Mois <- stri_sub(dat_import$Mois,2)
 dat_export$Mois <- stri_sub(dat_export$Mois,2)
 
@@ -308,11 +139,13 @@ dat_commerce$Date <-as.yearmon(paste(dat_commerce$year, dat_commerce$Mois), form
 
 dat_commerce <- dat_commerce[,c(7,3,5,6)]
 
-
+# Création d'une liste avec trois data frame différent comportant les import et export. 
+## Chaque dataframe comporte un pays
 lst1 <- split(dat_commerce, dat_commerce$CTYNAME)
 
-ts_import <- lapply(lst1, function(u) ts(u$Import, frequency = 12, start = c(2010,1), end = c(2019,11)))
-ts_export <- lapply(lst1, function(u) ts(u$Export, frequency = 12, start = c(2010,1), end = c(2019,11)))
+# Création de deux fonction qui transforme les import et les export en time series par dataframe
+ts_import <- lapply(lst1, function(u) ts(u$Import, frequency = 12, start = c(2010,1), end = c(2019,12)))
+ts_export <- lapply(lst1, function(u) ts(u$Export, frequency = 12, start = c(2010,1), end = c(2019,12)))
 
 
 
@@ -321,26 +154,56 @@ ts_export <- lapply(lst1, function(u) ts(u$Export, frequency = 12, start = c(201
 decomp_C <- stl(log(ts_import$Chine), s.window="periodic")
 Chine_ts <- exp(seasadj(decomp_C))
 
-autoplot(cbind(ts_import$Chine, SeasonallyAdjusted=Chine_ts)) +
+
+# Création de graphique montrant la tendance des importations chinoise au États-Unis
+graphC <- autoplot(Chine_ts) + #cbind(ts_import$Chine, SeasonallyAdjusted=Chine_ts
+  coord_cartesian(xlim=c(2017,2020)) +
+  labs(x=NULL,
+       y="Millions de dollars")+
+       #caption = "La ligne bleue correspond au moment où la sanction a été appliquée ")+
+  geom_vline(xintercept=2018.75,lwd=1,colour="blue")+
   theme_minimal()
+graphC
+ggsave("Stat_desc/graph_chine.jpg")
+
 
 
 
 # Corée du Sud
+## Désaisonalisation des données 
 decomp_CS <- stl(log(ts_import$CoréeSud), s.window="periodic")
 CS_ts <- exp(seasadj(decomp_CS))
 
-autoplot(cbind(ts_import$CoréeSud, SeasonallyAdjusted=CS_ts)) +
+# Création de graphique montrant la tendance des importations en provenance de la corée du sud au États-Unis
+graphCS <- autoplot(CS_ts) + #cbind(ts_import$Chine, SeasonallyAdjusted=Chine_ts
+  coord_cartesian(xlim=c(2017,2020)) +
+  labs(x=NULL,
+       y="Millions de dollars")+
+       #caption = "La ligne bleue correspond au moment où la sanction a été appliquée à la Chine")+
+  geom_vline(xintercept=2018.75,lwd=1,colour="blue")+
   theme_minimal()
 
+graphCS
+ggsave("Stat_desc/graphCS.jpg")
+
 # Vietnam
+## Désaisonalisation des données 
 decomp_VIET <- stl(log(ts_import$Vietnam), s.window="periodic")
 Viet_ts <- exp(seasadj(decomp_VIET))
 
-autoplot(cbind(ts_import$Vietnam, SeasonallyAdjusted=Viet_ts)) +
+# Création de graphique montrant la tendance des importations en provenance du Vietnam au États-Unis
+graph_Viet <- autoplot(Viet_ts) + #cbind(ts_import$Chine, SeasonallyAdjusted=Chine_ts
+  coord_cartesian(xlim=c(2017,2020)) +
+  labs(x=NULL,
+       y="Millions de dollars")+
+       #caption = "La ligne bleue correspond au moment où la sanction a été appliquée à la Chine")+
+  geom_vline(xintercept=2018.75,lwd=1,colour="blue")+
   theme_minimal()
+graph_Viet
+ggsave("Stat_desc/graphViet.jpg")
 
 
+# statistiques descriptives pour la chine 
 dat_chine <- as.data.frame(tk_tbl(ts_import$Chine,start = c(2010,1), freq = 12))  
 
 dat_chine <- 
@@ -353,9 +216,87 @@ dat_chine <-
 
 dat_chine1 <- pivot_wider(dat_chine,names_from = month,values_from = value)
 
-mean(ts_import$Chine)
+# Creation des statistiques 
+dat_chine1$mean <- apply(dat_chine1[,2:6], 1, mean) # moyenne
+dat_chine1$min <- apply(dat_chine1[,2:6], 1, min) # min
+dat_chine1$max <- apply(dat_chine1[,2:6], 1, max) # max
 
-dat_chine1$mean <- apply(dat_chine1[,2:6], 1, mean)
+desc_chine <- dat_chine1[3:10,] %>% select(1,14:16) 
+
+# Arrondissement des chiffre à deux decimales après la virgule
+desc_chine <- rapply(object = desc_chine, f = round, classes = "numeric", how = "replace", digits = 2)
+
+# changement des nom de colonnes
+colnames(desc_chine) <- c("Année","Moyenne","Min","Max")
+
+# Création du tableau stats
+stargazer(desc_chine,summary=FALSE, rownames=FALSE,type ="latex", out = "Stat_desc/Chine_desc.htm")
+
+## Statistiques desciptives Corée du sud
+
+# organisation des données
+dat_CS <- as.data.frame(tk_tbl(ts_import$CoréeSud,start = c(2010,1), freq = 12))  
+
+dat_CS <- 
+  dat_CS %>%
+    mutate( # convert to Date type using lubridate
+        year=year(index), # extract parts
+        month=month.abb[month(index)]
+        ) %>% 
+  subset(select = -index)
+
+
+dat_CS <- pivot_wider(dat_chine,names_from = month,values_from = value)
+
+# Création des stats desc
+dat_CS$mean <- apply(dat_CS[,2:6], 1, mean) # moyenne
+dat_CS$min <- apply(dat_CS[,2:6], 1, min) # min
+dat_CS$max <- apply(dat_CS[,2:6], 1, max) # max
+
+desc_CS <- dat_CS[3:10,] %>% select(1,14:16) 
+
+# Arrondissement des chiffre à deux decimales après la virgule
+desc_CS <- rapply(object = desc_CS, f = round, classes = "numeric", how = "replace", digits = 2)
+
+
+# Changment des noms de colonnes en francais
+colnames(desc_CS) <- c("Année","Moyenne","Min","Max")
+
+# Création du tableau
+stargazer(desc_chine,summary=FALSE, rownames=FALSE,type ="latex", out = "Stat_desc/CS_desc.htm")
+
+# Statistiques descriptives Vietnam
+dat_viet <- as.data.frame(tk_tbl(ts_import$Vietnam,start = c(2010,1), freq = 12))  
+
+dat_viet <- 
+  dat_viet %>%
+    mutate( # convert to Date type using lubridate
+        year=year(index), # extract parts
+        month=month.abb[month(index)]
+        ) %>% 
+  subset(select = -index)
+
+
+dat_viet <- pivot_wider(dat_chine,names_from = month,values_from = value)
+
+dat_viet$mean <- apply(dat_viet[,2:6], 1, mean)
+dat_viet$min <- apply(dat_viet[,2:6], 1, min)
+dat_viet$max <- apply(dat_viet[,2:6], 1, max)
+
+desc_viet <- dat_viet[3:10,] %>% select(1,14:16) 
+
+desc_viet <- rapply(object = desc_viet, f = round, classes = "numeric", how = "replace", digits = 2)
+
+colnames(desc_viet) <- c("Année","Moyenne","Min","Max")
+
+stargazer(desc_chine,summary=FALSE, rownames=FALSE,type ="latex", out = "Stat_desc/Viet_desc.htm")
+
+# Création de la figure 1
+megaplot <- ggarrange(graphC,graphCS,graph_Viet,
+          labels = c("Chine","Corée du Sud","Vietnam"))
+
+# Ajout du commentaire à la figure 1
+annotate_figure(megaplot,
+                bottom = text_grob("La ligne bleue correspond au moment \noù la sanction a été appliquée à la Chine", color = "black",hjust = 1, x = 1, face = "italic", size = 10))
 
 ```
-
